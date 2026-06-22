@@ -2002,16 +2002,6 @@
               }));
             });
 
-            const knowNote = el.querySelector('.know-note');
-            if (knowNote) {
-              c.push(new D.Paragraph({
-                alignment: rtlTextAlign,
-                bidirectional: docRtl,
-                spacing: { after: 80 },
-                children: [new D.TextRun({ text: gt(knowNote), size: 18, color: '3a4150', font: f, rightToLeft: docRtl, rtl: docRtl })]
-              }));
-            }
-
             el.querySelectorAll('.exp-item').forEach(item => {
               const yr = gt(item.querySelector('.exp-year'));
               const co = gt(item.querySelector('.exp-company'));
@@ -2036,17 +2026,30 @@
                 }));
               }
 
-              item.querySelectorAll('.exp-list li').forEach(li => {
-                c.push(new D.Paragraph({
-                  alignment: rtlTextAlign,
-                  bidirectional: docRtl,
-                  spacing: { after: 20 },
-                  indent: docRtl ? { right: 240 } : { left: 240 },
-                  children: [
-                    new D.TextRun({ text: docRtl ? '\u200F\u2022 ' : '\u2022 ', size: 19, color: navy, font: f, rightToLeft: docRtl, rtl: docRtl }),
-                    new D.TextRun({ text: gt(li), size: 19, color: '3a4150', font: f, rightToLeft: docRtl, rtl: docRtl })
-                  ]
-                }));
+              // Text of a <li> excluding any nested list (so the parent bullet
+              // doesn't swallow its sub-items). Uses gt() for identical text.
+              const liOwnText = (li) => {
+                const clone = li.cloneNode(true);
+                clone.querySelectorAll('ul, ol').forEach(u => u.remove());
+                return gt(clone);
+              };
+              const bulletPara = (text, indent, marker) => new D.Paragraph({
+                alignment: rtlTextAlign,
+                bidirectional: docRtl,
+                spacing: { after: 20 },
+                indent,
+                children: [
+                  new D.TextRun({ text: (docRtl ? '\u200F' : '') + marker + ' ', size: 19, color: navy, font: f, rightToLeft: docRtl, rtl: docRtl }),
+                  new D.TextRun({ text: text, size: 19, color: '3a4150', font: f, rightToLeft: docRtl, rtl: docRtl })
+                ]
+              });
+              // Top-level bullets only; nested project lists become sub-bullets,
+              // so all text appears exactly once and matches the on-screen text.
+              item.querySelectorAll(':scope > .exp-list > li').forEach(li => {
+                c.push(bulletPara(liOwnText(li), docRtl ? { right: 240 } : { left: 240 }, '\u2022'));
+                li.querySelectorAll(':scope > ul > li').forEach(sub => {
+                  c.push(bulletPara(gt(sub), docRtl ? { right: 540 } : { left: 540 }, '\u25E6'));
+                });
               });
             });
 
@@ -2085,6 +2088,29 @@
                   }));
                 }
               });
+            }
+
+            // lang-item rows inside a regular section (e.g. References)
+            el.querySelectorAll('.lang-item').forEach(li => {
+              c.push(new D.Paragraph({
+                alignment: rtlTextAlign,
+                bidirectional: docRtl,
+                spacing: { after: 40 },
+                children: [
+                  new D.TextRun({ text: docRtl ? '‏• ' : '• ', size: 20, color: navy, font: f, rightToLeft: docRtl, rtl: docRtl }),
+                  new D.TextRun({ text: gt(li), size: 20, color: '33394a', font: f, rightToLeft: docRtl, rtl: docRtl })
+                ]
+              }));
+            });
+
+            const knowNote = el.querySelector('.know-note');
+            if (knowNote) {
+              c.push(new D.Paragraph({
+                alignment: rtlTextAlign,
+                bidirectional: docRtl,
+                spacing: { after: 80 },
+                children: [new D.TextRun({ text: gt(knowNote), size: 18, color: '3a4150', font: f, rightToLeft: docRtl, rtl: docRtl })]
+              }));
             }
           });
 
