@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>איתן ברון — קורות חיים</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --navy: #022159;
+      --navy2: #0f3a73;
+      --blue: #2b5aa0;
+      --rail: #b9c6dd;
+      --pill-bg: #eef2f8;
+      --pill-border: #c3d0e6;
+      --ink: #2a2f3a;
+      --muted: #465168;
+      --line: #022159;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #5b6578;
+      font-family: 'Heebo', Arial, sans-serif;
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      padding: 24px 12px 60px;
+    }
+
+    /* Toolbar (not exported) */
+    .toolbar {
+      max-width: 794px;
+      margin: 0 auto 18px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .toolbar button {
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      padding: 11px 20px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform .12s ease, opacity .12s;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, .25);
+    }
+
+    .toolbar button svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    .btn-png {
+      background: #1f8a4c;
+      color: #fff;
+    }
+
+    .btn-pdf {
+      background: #c0392b;
+      color: #fff;
+    }
+
+    .btn-word {
+      background: #2b579a;
+      color: #fff;
+    }
+
+    .toolbar button:hover {
+      transform: translateY(-2px);
+    }
+
+    .toolbar button:disabled {
+      opacity: .55;
+      cursor: wait;
+      transform: none;
+    }
+
+    #doc {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 26px;
+    }
+
+    .page {
+      width: 794px;
+      max-width: 100%;
+      min-height: 1123px;
+      background: #fff;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, .35);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      padding: 30px 34px;
+      background-color: #fff2e3;
+      border-bottom: 1px solid #022159;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: stretch;
+      gap: 18px;
+    }
+
+    .name-block {
+      flex: 1;
+      text-align: right;
+      padding-bottom: 2px;
+    }
+
+    .name {
+      font-size: 23px;
+      font-weight: 800;
+      color: var(--navy2);
+      line-height: 1;
+      letter-spacing: 0.5px;
+      margin: 0px 0px 5px 0px;
+    }
+
+    .subtitle {
+      margin-top: 5px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--navy);
+      direction: ltr;
+      display: inline-block;
+    }
+
+    .subtitle .role {
+      color: #3a4a66;
+    }
+
+    .photo-wrap {
+      flex: 0 0 auto;
+      width: 105px;
+      align-self: stretch;
+      border-radius: 11px;
+      border: 2px solid var(--navy);
+      padding: 0;
+      background: #fff;
+      box-shadow: 0 4px 14px rgba(2, 33, 89, .25);
+      overflow: hidden;
+    }
+
+    .photo-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 9px;
+      display: block;
+    }
+
+    .contact {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0;
+      font-size: 14px;
+      color: var(--navy);
+      font-weight: 500;
+      margin-top: 10px;
+    }
+
+    .contact .item {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .contact .item svg {
+      width: 16px;
+      height: 16px;
+      fill: var(--navy);
+      flex: 0 0 auto;
+    }
+
+    .contact .sep {
+      width: 1px;
+      height: 15px;
+      background: #9aa7c2;
+      margin: 0 13px;
+    }
+
+    .contact .mail {
+      direction: ltr;
+    }
+
+    .personal {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0;
+      font-size: 12.7px;
+      color: var(--navy);
+      margin-top: 10px;
+    }
+
+    .personal .item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .personal .item svg {
+      width: 14px;
+      height: 14px;
+      fill: var(--navy);
+      flex: 0 0 auto;
+    }
+
+    .personal .sep {
+      width: 1px;
+      height: 13px;
+      background: #aab4c9;
+      margin: 0 12px;
+    }
+
+    .header-bottom-rule {
+      /* height: 1px; */
+      background: var(--navy);
+      margin: 20px 0 0;
+    }
+
+    /* Sections */
+    .section {
+      padding: 13px 34px 16px 34px;
+    }
+
+    .sec-head {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 11px;
+      margin-bottom: 11px;
+    }
+
+    .sec-divider {
+      height: 1px;
+      background: var(--navy);
+      margin: 1px 34px;
+      border-radius: 2px;
+    }
+
+    .sec-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--navy);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+    }
+
+    .sec-icon svg {
+      width: 17px;
+      height: 17px;
+      fill: #fff;
+    }
+
+    .sec-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--navy);
+    }
+
+    .sec-title .cont {
+      font-size: 13px;
+      font-weight: 600;
+      color: #6a7790;
+    }
+
+    .summary {
+      font-size: 14px;
+      line-height: 1.62;
+      color: #33394a;
+      text-align: justify;
+      margin: 0px;
+    }
+
+    /* Professional knowledge */
+    .know-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 9px;
+    }
+
+    .know-label {
+      flex: 0 0 96px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--navy);
+      padding-top: 3px;
+    }
+
+    .know-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      flex: 1;
+    }
+
+    .skill {
+      border: 1.5px solid var(--pill-border);
+      background: var(--pill-bg);
+      color: var(--navy);
+      font-weight: 600;
+      font-size: 11.3px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      direction: ltr;
+      white-space: nowrap;
+    }
+
+    .know-note {
+      font-size: 12.7px;
+      color: #3a4150;
+      margin-top: 3px;
+    }
+
+    .know-note b {
+      color: var(--navy);
+    }
+
+    /* Experience */
+    .experience {
+      position: relative;
+      padding-left: 27px;
+    }
+
+    .experience::before {
+      content: "";
+      position: absolute;
+      top: 9px;
+      bottom: 10px;
+      right: 96px;
+      width: 2.5px;
+      background: var(--rail);
+      border-radius: 2px;
+    }
+
+    .exp-item {
+      position: relative;
+      padding-right: 126px;
+      margin-bottom: 12px;
+    }
+
+    .exp-item:last-child {
+      margin-bottom: 4px;
+    }
+
+    .exp-year {
+      position: absolute;
+      right: 0;
+      top: 5px;
+      height: 14px;
+      width: 82px;
+      text-align: left;
+      font-size: 13.5px;
+      font-weight: 800;
+      color: var(--navy);
+      direction: ltr;
+      line-height: 14px;
+      white-space: nowrap;
+    }
+
+    .exp-dot {
+      position: absolute;
+      right: 89px;
+      top: 5px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--navy);
+      border: 3px solid #fff;
+      box-shadow: 0 0 0 2px var(--rail);
+    }
+
+    .exp-company {
+      font-size: 15px;
+      font-weight: 800;
+      color: #16243f;
+      margin-bottom: 2px;
+      direction: rtl;
+    }
+
+    .exp-company .en {
+      direction: ltr;
+      display: inline-block;
+    }
+
+    .exp-desc {
+      font-size: 12.3px;
+      color: #6a7286;
+      margin-bottom: 4px;
+      font-style: italic;
+    }
+
+    .exp-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .exp-list li {
+      position: relative;
+      padding-right: 16px;
+      margin-bottom: 2px;
+      font-size: 13px;
+      line-height: 1.4;
+      color: #3a4150;
+    }
+
+    .exp-list li::before {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: 7px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--navy);
+    }
+
+    .exp-list li .en {
+      direction: ltr;
+      unicode-bidi: isolate;
+    }
+
+    .ltr {
+      direction: ltr;
+      unicode-bidi: isolate;
+    }
+
+    /* Bottom columns */
+    .bottom-divider {
+      height: 2px;
+      background: var(--navy);
+      margin: 9px 34px;
+      border-radius: 2px;
+    }
+
+    .two-col {
+      display: flex;
+      gap: 0;
+      padding: 9px 34px;
+      align-items: stretch;
+    }
+
+    .two-col .col {
+      flex: 1;
+      padding: 0 18px;
+    }
+
+    .two-col .col:first-child {
+      padding-right: 0;
+    }
+
+    .two-col .col:last-child {
+      padding-left: 0;
+    }
+
+    .two-col .sec-head {
+      margin-bottom: 11px;
+    }
+
+    .vdivider {
+      width: 2px;
+      background: var(--navy);
+      align-self: stretch;
+      margin: 4px 0;
+      flex: 0 0 auto;
+      border-radius: 2px;
+    }
+
+    .edu-timeline {
+      position: relative;
+    }
+
+    .edu-timeline::before {
+      content: "";
+      position: absolute;
+      top: 9px;
+      bottom: 10px;
+      right: 96px;
+      width: 2.5px;
+      background: var(--rail);
+      border-radius: 2px;
+    }
+
+    .edu-item {
+      position: relative;
+      padding-right: 126px;
+      margin-bottom: 11px;
+    }
+
+    .edu-item:last-child {
+      margin-bottom: 2px;
+    }
+
+    .edu-dot {
+      position: absolute;
+      right: 89px;
+      top: 5px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--navy);
+      border: 3px solid #fff;
+      box-shadow: 0 0 0 2px var(--rail);
+    }
+
+    .edu-text {
+      min-width: 0;
+    }
+
+    .edu-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #16243f;
+    }
+
+    .edu-sub {
+      font-size: 12.5px;
+      color: #56607a;
+      margin-top: 1px;
+      line-height: 1.4;
+    }
+
+    .edu-note {
+      font-size: 11.8px;
+      color: #6a7488;
+      margin-top: 1px;
+      line-height: 1.35;
+    }
+
+    .edu-year {
+      position: absolute;
+      right: 0;
+      top: 5px;
+      height: 14px;
+      width: 82px;
+      text-align: left;
+      font-size: 13.5px;
+      font-weight: 800;
+      color: var(--navy);
+      direction: ltr;
+      line-height: 14px;
+      white-space: nowrap;
+    }
+
+    .lang-item {
+      font-size: 13.3px;
+      color: #33394a;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      line-height: 1.35;
+    }
+
+    .lang-item::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--navy);
+      flex: 0 0 auto;
+      margin-top: 5px;
+    }
+
+    .lang-item b {
+      font-weight: 700;
+      color: #16243f;
+    }
+
+    .spacer {
+      flex: 1;
+    }
+
+    .footer {
+      background: var(--navy);
+      color: #eef2fb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 11px 20px;
+      font-size: 13.5px;
+      font-weight: 600;
+    }
+
+    .footer svg {
+      width: 20px;
+      height: 20px;
+      fill: #cfe0ff;
+      flex: 0 0 auto;
+    }
+
+    .page-num {
+      position: absolute;
+      bottom: 6px;
+      left: 14px;
+      font-size: 11px;
+      color: #9aa7c2;
+      font-weight: 600;
+      direction: ltr;
+    }
+
+    @media (max-width:560px) {
+      .name {
+        font-size: 30px;
+      }
+
+      .page {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="toolbar">
+    <button class="btn-png" id="btnPng" onclick="exportPNG()">
+      <svg viewBox="0 0 24 24">
+        <path
+          d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+      </svg>
+      ייצוא כתמונה (PNG)
+    </button>
+    <button class="btn-pdf" id="btnPdf" onclick="exportPDF()">
+      <svg viewBox="0 0 24 24">
+        <path
+          d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H7.5v2H6V7h3c.83 0 1.5.67 1.5 1.5v2zm5 2c0 .83-.67 1.5-1.5 1.5h-3V7h3c.83 0 1.5.67 1.5 1.5v5zm4-5.5H18v1h1.5V13H18v3h-1.5V7H20v1z" />
+      </svg>
+      ייצוא כ-PDF (2 עמודים)
+    </button>
+    <button class="btn-word" id="btnWord" onclick="exportWord()">
+      <svg viewBox="0 0 24 24">
+        <path
+          d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM6 20V4h5v7h7v9H6z" />
+      </svg>
+      ייצוא כ-Word
+    </button>
+  </div>
+
+  <div id="doc">
+
+    <!-- ===================== PAGE 1 ===================== -->
+    <div class="page" id="page1">
+
+      <div class="header">
+        <div class="header-top">
+          <div class="name-block">
+            <h1 class="name">איתן ברון</h1>
+            <div class="subtitle"><span class="ltr">Java / J2EE · ASP.NET C# · Vue.js 2.0 · .NET Core 3.1</span> <span
+                class="role">| מפתח תוכנה</span></div>
+            <div class="contact">
+              <span class="item"><svg viewBox="0 0 24 24">
+                  <path
+                    d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z" />
+                </svg>המלך דוד 3, אשדוד</span>
+              <span class="sep"></span>
+              <span class="item"><svg viewBox="0 0 24 24">
+                  <path
+                    d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
+                </svg><span class="ltr">054-3033425</span></span>
+              <span class="sep"></span>
+              <span class="item"><svg viewBox="0 0 24 24">
+                  <path
+                    d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+                </svg><span class="mail">eitan2007@gmail.com</span></span>
+            </div>
+            <div class="personal">
+              <span class="item"><svg viewBox="0 0 24 24">
+                  <path
+                    d="M12 6c1.11 0 2-.9 2-2 0-.38-.1-.73-.29-1.03L12 0l-1.71 2.97c-.19.3-.29.65-.29 1.03 0 1.1.9 2 2 2zm6 6v-2c0-1.1-.9-2-2-2h-3V6h-2v2H8c-1.1 0-2 .9-2 2v2H4v2h16v-2h-2zM4 22h16v-4H4v4z" />
+                </svg>תאריך לידה: 1.2.74</span>
+              <span class="sep"></span>
+              <span class="item">מצב משפחתי: רווק</span>
+              <span class="sep"></span>
+              <span class="item">ארץ לידה: ישראל</span>
+            </div>
+          </div>
+          <div class="photo-wrap"><img
+              src="data:image/jpeg;base64,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"
+              alt="איתן ברון"></div>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="section">
+        <div class="sec-head">
+          <span class="sec-icon"><svg viewBox="0 0 24 24">
+              <path
+                d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+            </svg></span>
+          <span class="sec-title">תקציר מקצועי</span>
+        </div>
+        <p class="summary">מפתח תוכנה מנוסה עם כ-18 שנות ניסיון בפיתוח מערכות <span class="ltr">Web</span> ו-<span
+            class="ltr">Enterprise</span>, מתוכן כ-12 שנים בבנק דיסקונט. בעל ניסיון מעמיק בפיתוח, תחזוקה ושדרוג של
+          מערכות ארגוניות קריטיות בטכנולוגיות <span class="ltr">Java/J2EE</span>, <span class="ltr">ASP.NET C#</span>,
+          <span class="ltr">.NET Core 3.1</span> ו-<span class="ltr">Vue.js 2.0</span>. משלב עומק טכנולוגי, מקצועיות,
+          הבנה עסקית ויכולת עבודה מצוינת בסביבות ארגוניות מורכבות.
+        </p>
+      </div>
+      <div class="sec-divider"></div>
+
+      <!-- Professional knowledge -->
+      <div class="section">
+        <div class="sec-head">
+          <span class="sec-icon"><svg viewBox="0 0 24 24">
+              <path
+                d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z" />
+            </svg></span>
+          <span class="sec-title">ידע מקצועי</span>
+        </div>
+        <div class="know-row">
+          <div class="know-label">שפות וטכנולוגיות</div>
+          <div class="know-pills">
+            <span class="skill">Java / J2EE</span><span class="skill">JSP</span><span class="skill">C#</span>
+            <span class="skill">ASP.NET</span><span class="skill">.NET Core 3.1</span><span class="skill">Vue.js
+              2.0</span>
+            <span class="skill">JavaScript</span><span class="skill">jQuery</span><span class="skill">Ajax</span>
+            <span class="skill">HTML</span><span class="skill">SQL / HQL</span><span class="skill">XML</span>
+            <span class="skill">PHP</span><span class="skill">Visual Basic 6.0</span><span class="skill">Borland
+              C</span><span class="skill">Assembler</span>
+          </div>
+        </div>
+        <div class="know-row">
+          <div class="know-label">כלים</div>
+          <div class="know-pills">
+            <span class="skill">Visual Studio 2019</span><span class="skill">MyEclipse Blue</span><span
+              class="skill">RAD</span>
+            <span class="skill">PL/SQL</span><span class="skill">VSCode</span><span class="skill">Antigravity
+              IDE</span><span class="skill">iReport
+              (Jasper)</span>
+          </div>
+        </div>
+        <div class="know-row">
+          <div class="know-label">מסדי נתונים</div>
+          <div class="know-pills">
+            <span class="skill">Oracle</span><span class="skill">MS SQL Server</span>
+          </div>
+        </div>
+        <div class="know-row">
+          <div class="know-label">שרתי Web</div>
+          <div class="know-pills">
+            <span class="skill">WebSphere 8.5</span><span class="skill">WebLogic</span><span class="skill">Tomcat</span>
+          </div>
+        </div>
+        <div class="know-note"><b>התמחויות:</b> ידע בחומרה והתקנה של מערכות הפעלה ותוכנה.</div>
+      </div>
+      <div class="sec-divider"></div>
+
+      <!-- Experience (part 1) -->
+      <div class="section">
+        <div class="sec-head">
+          <span class="sec-icon"><svg viewBox="0 0 24 24">
+              <path
+                d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z" />
+            </svg></span>
+          <span class="sec-title">ניסיון מקצועי</span>
+        </div>
+        <div class="experience">
+          <div class="exp-item">
+            <div class="exp-year">2012–2023</div>
+            <div class="exp-dot"></div>
+            <div class="exp-company">בנק דיסקונט (עובד חברת יעל תוכנה) | מפתח תוכנה</div>
+            <ul class="exp-list">
+              <li>פיתוח ותחזוקה של אפליקציות <span class="en">Web</span> ב-<span class="en">Java/J2EE</span> תוך שימוש
+                ב-<span class="en">Struts 2, Tiles, less, CoffeeScript, Java 1.7</span>.</li>
+              <li>פיתוח ותחזוקה של אפליקציות <span class="en">Web</span> ב-<span class="en">ASP.NET / C#</span>, עבודה
+                בסביבת <span class="en">VS 2019</span> ב-<span class="en">UI</span> עם <span class="en">jQuery, JS, CSS,
+                  .NET Framework 4.7.1</span>.</li>
+              <li>פיתוח ותחזוקה של אפליקציות <span class="en">Web</span> ב-<span class="en">Vue.js 2.0</span> ו-<span
+                  class="en">.NET Core 3.1</span>.</li>
+              <li>פיתוח <span class="en">ActiveX</span> ל-<span class="en">IE11</span> עבור אפליקציית <span
+                  class="en">ASP.NET</span>.</li>
+              <li>עבודה חלקית בצד <span class="en">Server</span> בתיקון תקלות והשלמות פיתוח.</li>
+            </ul>
+          </div>
+          <div class="exp-item">
+            <div class="exp-year">2010–2012</div>
+            <div class="exp-dot"></div>
+            <div class="exp-company">בזק — מערכת <span class="en">CRM</span> (עובד חברת <span class="en">Matrix</span>)
+              | <span class="en">CRM PeopleSoft</span></div>
+            <ul class="exp-list">
+              <li>מפתח <span class="en">CRM-PeopleSoft</span> — פיתוח מודולים במערכת ה-<span class="en">CRM</span> של
+                הארגון.</li>
+              <li>טיפול בבאגים ושיפור פונקציונליות קיימת.</li>
+            </ul>
+          </div>
+          <div class="exp-item">
+            <div class="exp-year">2007–2009</div>
+            <div class="exp-dot"></div>
+            <div class="exp-company"><span class="en">CIS Networking</span> | מפתח <span class="en">Java / J2EE</span>
+            </div>
+            <div class="exp-desc">חברה למתן פתרונות מחשוב מתקדמים בהתאמה לצורכי הלקוח — מול טבע ישראל. בזל 16, פ"ת.
+            </div>
+            <ul class="exp-list">
+              <li>מפתח <span class="en">Java/J2EE</span> בארכיטקטורת <span class="en">MVC</span>; פיתוח ותחזוקה של כ-6
+                אפליקציות <span class="en">Web</span> ב-<span class="en">Java 1.4</span> על <span class="en">WebSphere
+                  6</span> עם <span class="en">Hibernate, Spring, Struts</span> (open source frameworks).</li>
+              <li>סביבת פיתוח: <span class="en">IBM Rational Software Architect V6.0 (RAD6)</span> מבוסס <span
+                  class="en">Eclipse</span>, <span class="en">KeepTool 7, TOAD</span>.</li>
+              <li>עבודה מול <span class="en">Oracle 9i/10g</span> — יצירת טבלאות, קשרים ושאילתות <span
+                  class="en">SQL/HSQL</span> לעבודה מול <span class="en">Hibernate</span>.</li>
+              <li>פיתוח ממשקי <span class="en">JAXB</span> מעל מערכת <span class="en">AS400</span> עבור חברת טבע (עבודה
+                ישירה מול הלקוח).</li>
+              <li>ניהול <span class="en">Workflow</span> של תהליכים לפי <span class="en">Role</span> של משתמשים; פיתוח
+                תשתית ל-<span class="en">File Attachments</span>, שליחת מיילים מותאמים אישית, ויבוא/יצוא קבצי <span
+                  class="en">Excel</span> באמצעות חבילת <span class="en">POI</span> של <span class="en">Apache</span>.
+              </li>
+              <li>ביצוע בדיקות <span class="en">QA</span> ותיקון באגים על בסיס יומיומי, והדרכת מפתחים חדשים.</li>
+              <li>טכנולוגיות: <span class="en">Spring 2, Hibernate 3, Struts 1.3.8, Tiles, Velocity 1.5, JSP, CSS, HTML,
+                  JavaScript, DWR (Ajax)</span>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+      <div class="page-num">1 / 2</div>
+    </div>
+
+    <!-- ===================== PAGE 2 ===================== -->
+    <div class="page" id="page2">
+
+      <!-- Experience (continued) -->
+      <div class="section" style="padding-top:18px;">
+        <div class="sec-head">
+          <span class="sec-icon"><svg viewBox="0 0 24 24">
+              <path
+                d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z" />
+            </svg></span>
+          <span class="sec-title">ניסיון מקצועי <span class="cont">(המשך)</span></span>
+        </div>
+        <div class="experience">
+          <div class="exp-item">
+            <div class="exp-year">2006–2007</div>
+            <div class="exp-dot"></div>
+            <div class="exp-company"><span class="en">Amdocs</span> | מפתח <span class="en">Java / J2EE</span></div>
+            <div class="exp-desc">חברה לשירותים ומוצרי תוכנה בתחום התקשורת והפיננסים. צומת רעננה.</div>
+            <ul class="exp-list">
+              <li>מפתח <span class="en">Java/J2EE</span> תחת ה-<span class="en">Framework</span> של חברת <span
+                  class="en">Clarify</span>; מפתח <span class="en">SME</span> במחלקת <span class="en">CRM
+                  Delivery</span>.</li>
+              <li>פיתוח מול מערכות חיצוניות — <span class="en">Billing, Ordering</span>.</li>
+              <li>עבודה עם <span class="en">WebSphere</span> ו-<span class="en">WebLogic</span> תחת <span
+                  class="en">Unix</span>, ניהול אפליקציית ה-<span class="en">Web CRM</span> של אמדוקס (<span
+                  class="en">Java 1.4, Eclipse</span>).</li>
+              <li>כתיבת <span class="en">Detail Design</span>, קידוד דפי <span class="en">JSP, XML</span> בצד <span
+                  class="en">Client</span> ואובייקטים בצד <span class="en">Server (JavaBeans)</span>.</li>
+              <li>פרויקטים: <span class="en">LightSpeed</span> של <span class="en">AT&amp;T</span>, ו-<span
+                  class="en">Cablevision</span> (חברת כבלים אמריקאית).</li>
+            </ul>
+          </div>
+          <div class="exp-item">
+            <div class="exp-year">2004–2005</div>
+            <div class="exp-dot"></div>
+            <div class="exp-company">קשרי גל ים — חברת טלי, נמל אשדוד | אחראי מחשוב</div>
+            <ul class="exp-list">
+              <li>אחראי מחשוב ותקשורת מחשבים, עובד צוות.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="sec-divider"></div>
+
+      <!-- Education -->
+      <div class="section">
+        <div class="sec-head">
+          <span class="sec-icon"><svg viewBox="0 0 24 24">
+              <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm-6 9.18v3.82l6 3.27 6-3.27v-3.82l-6 3.27-6-3.27z" />
+            </svg></span>
+          <span class="sec-title">השכלה</span>
+        </div>
+        <div class="edu-timeline">
+          <div class="edu-item">
+            <div class="edu-year">2001–2006</div>
+            <div class="edu-dot"></div>
+            <div class="edu-text">
+              <div class="edu-title">מהנדס תוכנה <span class="ltr">B.Tech</span></div>
+              <div class="edu-sub">המכללה האקדמית להנדסה בנגב — סמי שמעון</div>
+              <div class="edu-note">ציונים 90+ בכל הקורסים הנוגעים לשפות תכנות · פרויקט גמר בציון 94.</div>
+            </div>
+          </div>
+          <div class="edu-item">
+            <div class="edu-year">1999–2001</div>
+            <div class="edu-dot"></div>
+            <div class="edu-text">
+              <div class="edu-title">הנדסאי תוכנה</div>
+              <div class="edu-sub">המכללה למינהל — אשדוד</div>
+              <div class="edu-note">כל שפות התכנות בציונים 90+ · פרויקט גמר ב-<span class="ltr">VB6</span> בנושא תקשורת
+                מחשבים בציון 100.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sec-divider"></div>
+
+      <!-- Military + Languages -->
+      <div class="two-col">
+        <div class="col">
+          <div class="sec-head">
+            <span class="sec-icon"><svg viewBox="0 0 24 24">
+                <path
+                  d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 14l-4-4 1.41-1.41L11 12.17l5.59-5.59L18 8l-7 7z" />
+              </svg></span>
+            <span class="sec-title">שירות צבאי</span>
+          </div>
+          <div class="edu-timeline mil-timeline">
+            <div class="edu-item">
+              <div class="edu-year">1992–1995</div>
+              <div class="edu-dot"></div>
+              <div class="edu-text">
+                <div class="edu-title">חיל האוויר — מפ"ט שלב 9</div>
+                <div class="edu-sub">סמל ראשון (סמ"ר)</div>
+                <div class="edu-note">עבודה בתפעול מערכות מלאי באמצעות מחשב.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="vdivider"></div>
+        <div class="col">
+          <div class="sec-head">
+            <span class="sec-icon"><svg viewBox="0 0 24 24">
+                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
+              </svg></span>
+            <span class="sec-title">שפות</span>
+          </div>
+          <div class="lang-item"><span><b>עברית</b> — קריאה, כתיבה ודיבור · שפת אם.</span></div>
+          <div class="lang-item"><span><b>אנגלית</b> — קריאה, כתיבה ודיבור · טוב מאוד.</span></div>
+        </div>
+      </div>
+      <div class="sec-divider"></div>
+
+      <!-- ידע אישי נרכש -->
+      <div class="section">
+        <div class="sec-head">
+          <span class="sec-icon"><svg viewBox="0 0 24 24">
+              <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z" />
+            </svg></span>
+          <span class="sec-title">ידע אישי נרכש</span>
+        </div>
+        <p class="summary">ניסיון מעשי נרחב בעבודה עם מודלים ופלטפורמות מובילות של בינה מלאכותית לפיתוח תוכנה, ביניהן:
+          <span class="ltr">OpenAI Codex, Claude Code (Anthropic), Google Gemini, GitHub Copilot</span> ועוד.
+          פיתוח בטכנולוגיות: <span class="ltr">ReactJS, Next.js, Three.js, Python</span>.
+          פיתחתי באופן עצמאי אפליקציות מלאות הזמינות באינטרנט — ראו:
+          <span class="ltr"><a href="https://eitan.work" target="_blank"
+              style="color:var(--blue);font-weight:700;text-decoration:none;">eitan.work</a></span>
+        </p>
+      </div>
+
+      <div class="spacer"></div>
+      <div class="footer">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 1L2 6v2h20V6L12 1zM4 10v8H2v2h20v-2h-2v-8h-2v8h-3v-8h-2v8h-2v-8H9v8H6v-8H4z" />
+        </svg>
+        ניסיון משמעותי בסביבות בנקאיות וארגוניות מורכבות
+      </div>
+      <div class="page-num">2 / 2</div>
+    </div>
+
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+  <script>
+    function busy(s) {
+      document.getElementById('btnPng').disabled = s;
+      document.getElementById('btnPdf').disabled = s;
+      document.getElementById('btnWord').disabled = s;
+    }
+    async function shot(el) {
+      await document.fonts.ready;
+      return await html2canvas(el, {
+        scale: 3, backgroundColor: '#ffffff', useCORS: true,
+        windowWidth: el.scrollWidth, windowHeight: el.scrollHeight
+      });
+    }
+    async function exportPNG() {
+      busy(true);
+      try {
+        const pages = [...document.querySelectorAll('.page')];
+        for (let i = 0; i < pages.length; i++) {
+          const canvas = await shot(pages[i]);
+          const link = document.createElement('a');
+          link.download = 'איתן_ברון_קורות_חיים_עמוד_' + (i + 1) + '.png';
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+          if (i < pages.length - 1) await new Promise(r => setTimeout(r, 500));
+        }
+      } catch (e) { alert('שגיאה בייצוא התמונה: ' + e.message); }
+      busy(false);
+    }
+    async function exportPDF() {
+      busy(true);
+      try {
+        const pages = [...document.querySelectorAll('.page')];
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
+        for (let i = 0; i < pages.length; i++) {
+          const canvas = await shot(pages[i]);
+          const img = canvas.toDataURL('image/jpeg', 0.95);
+          // Each .page is designed at exact A4 proportions, so fill the whole
+          // sheet edge-to-edge. This prevents thin white side margins that
+          // appear (most visibly next to the cream header) when a page's
+          // content makes it a touch taller than A4's aspect ratio.
+          if (i > 0) pdf.addPage();
+          pdf.addImage(img, 'JPEG', 0, 0, pw, ph);
+        }
+        pdf.save('איתן_ברון_קורות_חיים.pdf');
+      } catch (e) { alert('שגיאה בייצוא ה-PDF: ' + e.message); }
+      busy(false);
+    }
+    async function exportWord() {
+      busy(true);
+      try {
+        const D = docx;
+        const navy = '022159';
+        const f = 'Heebo';
+        const rtlTextAlign = D.AlignmentType.START;
+        const twoColDividerPadding = 280;
+        function gt(el) { return el ? el.textContent.trim().replace(/\s+/g, ' ') : ''; }
+
+        function base64ToUint8Array(base64) {
+          const raw = window.atob(base64.split(',')[1]);
+          const rawLength = raw.length;
+          const array = new Uint8Array(new ArrayBuffer(rawLength));
+          for (let i = 0; i < rawLength; i++) {
+            array[i] = raw.charCodeAt(i);
+          }
+          return array;
+        }
+
+        function mkSecHead(text) {
+          return new D.Paragraph({
+            alignment: rtlTextAlign,
+            bidirectional: true,
+            spacing: { before: 200, after: 100 },
+            border: { bottom: { style: D.BorderStyle.SINGLE, size: 6, color: navy, space: 4 } },
+            children: [new D.TextRun({ text: text, bold: true, size: 26, color: navy, font: f, rightToLeft: true })]
+          });
+        }
+
+        function mkRule() {
+          return new D.Paragraph({
+            spacing: { before: 60, after: 60 },
+            border: { bottom: { style: D.BorderStyle.SINGLE, size: 4, color: navy, space: 1 } },
+            children: []
+          });
+        }
+
+        const photoEl = document.querySelector('.photo-wrap img');
+        const photoSrc = photoEl ? photoEl.getAttribute('src') : '';
+
+        const contactRuns = [];
+        const contactItems = [...document.querySelectorAll('.contact .item')];
+        contactItems.forEach((item, index) => {
+          const isEmail = item.querySelector('.mail') !== null;
+          const isPhone = !isEmail && item.querySelector('.ltr') !== null;
+          contactRuns.push(new D.TextRun({
+            text: gt(item),
+            size: 20,
+            color: '1f2a44',
+            font: f,
+            rightToLeft: !(isEmail || isPhone)
+          }));
+          if (index < contactItems.length - 1) {
+            contactRuns.push(new D.TextRun({
+              text: '   |   ',
+              size: 20,
+              color: '9aa7c2',
+              font: f
+            }));
+          }
+        });
+
+        const personalRuns = [];
+        const personalItems = [...document.querySelectorAll('.personal .item')];
+        personalItems.forEach((item, index) => {
+          personalRuns.push(new D.TextRun({
+            text: gt(item),
+            size: 18,
+            color: '3a4256',
+            font: f,
+            rightToLeft: true
+          }));
+          if (index < personalItems.length - 1) {
+            personalRuns.push(new D.TextRun({
+              text: '   |   ',
+              size: 18,
+              color: 'aab4c9',
+              font: f
+            }));
+          }
+        });
+
+        let headerBlock;
+        if (photoSrc) {
+          headerBlock = new D.Table({
+            visuallyRightToLeft: true,
+            columnWidths: [8606, 1600],
+            width: { size: 10206, type: D.WidthType.DXA },
+            borders: {
+              top: { style: D.BorderStyle.NONE },
+              bottom: { style: D.BorderStyle.NONE },
+              left: { style: D.BorderStyle.NONE },
+              right: { style: D.BorderStyle.NONE },
+              insideHorizontal: { style: D.BorderStyle.NONE },
+              insideVertical: { style: D.BorderStyle.NONE }
+            },
+            rows: [
+              new D.TableRow({
+                children: [
+                  new D.TableCell({
+                    width: { size: 8606, type: D.WidthType.DXA },
+                    borders: {
+                      top: { style: D.BorderStyle.NONE },
+                      bottom: { style: D.BorderStyle.NONE },
+                      left: { style: D.BorderStyle.NONE },
+                      right: { style: D.BorderStyle.NONE }
+                    },
+                    children: [
+                      new D.Paragraph({
+                        alignment: rtlTextAlign,
+                        bidirectional: true,
+                        spacing: { after: 30 },
+                        children: [new D.TextRun({ text: gt(document.querySelector('.name')), bold: true, size: 48, color: '0f3a73', font: f, rightToLeft: true })]
+                      }),
+                      new D.Paragraph({
+                        alignment: rtlTextAlign,
+                        bidirectional: true,
+                        spacing: { after: 60 },
+                        children: [new D.TextRun({ text: gt(document.querySelector('.subtitle')), bold: true, size: 22, color: navy, font: f, rightToLeft: true })]
+                      }),
+                      new D.Paragraph({
+                        alignment: rtlTextAlign,
+                        bidirectional: true,
+                        spacing: { after: 30 },
+                        children: contactRuns
+                      }),
+                      new D.Paragraph({
+                        alignment: rtlTextAlign,
+                        bidirectional: true,
+                        spacing: { after: 30 },
+                        children: personalRuns
+                      })
+                    ]
+                  }),
+                  new D.TableCell({
+                    width: { size: 1600, type: D.WidthType.DXA },
+                    borders: {
+                      top: { style: D.BorderStyle.NONE },
+                      bottom: { style: D.BorderStyle.NONE },
+                      left: { style: D.BorderStyle.NONE },
+                      right: { style: D.BorderStyle.NONE }
+                    },
+                    children: [
+                      new D.Paragraph({
+                        alignment: D.AlignmentType.LEFT,
+                        children: [
+                          new D.ImageRun({
+                            data: base64ToUint8Array(photoSrc),
+                            transformation: { width: 80, height: 95 }
+                          })
+                        ]
+                      })
+                    ]
+                  })
+                ]
+              })
+            ]
+          });
+        } else {
+          headerBlock = new D.Paragraph({
+            alignment: rtlTextAlign,
+            bidirectional: true,
+            children: [new D.TextRun({ text: gt(document.querySelector('.name')), bold: true, size: 48, color: '0f3a73', font: f, rightToLeft: true })]
+          });
+        }
+
+        const sections = [];
+        const pages = [...document.querySelectorAll('.page')];
+
+        pages.forEach((page, pageIndex) => {
+          const c = [];
+
+          if (pageIndex === 0) {
+            c.push(headerBlock);
+            c.push(mkRule());
+          }
+
+          page.querySelectorAll('.section, .two-col').forEach(el => {
+            if (el.classList.contains('two-col')) {
+              const cols = [...el.querySelectorAll('.col')];
+              if (cols.length === 2) {
+                const rightColChildren = [];
+                const leftColChildren = [];
+
+                function processCol(colEl, colChildren) {
+                  const tEl = colEl.querySelector('.sec-title');
+                  if (!tEl) return;
+
+                  colChildren.push(new D.Paragraph({
+                    alignment: rtlTextAlign,
+                    bidirectional: true,
+                    spacing: { before: 120, after: 120 },
+                    border: { bottom: { style: D.BorderStyle.SINGLE, size: 6, color: navy, space: 4 } },
+                    children: [new D.TextRun({ text: gt(tEl), bold: true, size: 24, color: navy, font: f, rightToLeft: true })]
+                  }));
+
+                  colEl.querySelectorAll('.edu-item').forEach(item => {
+                    const yr = gt(item.querySelector('.edu-year'));
+                    const ti = gt(item.querySelector('.edu-title'));
+                    const sub = item.querySelector('.edu-sub');
+                    const note = item.querySelector('.edu-note');
+
+                    colChildren.push(new D.Paragraph({
+                      alignment: rtlTextAlign,
+                      bidirectional: true,
+                      spacing: { before: 60, after: 30 },
+                      children: [
+                        new D.TextRun({ text: ti, bold: true, size: 21, color: '16243f', font: f, rightToLeft: true }),
+                        new D.TextRun({ text: '    ' + yr, bold: true, size: 20, color: navy, font: f })
+                      ]
+                    }));
+                    if (sub) {
+                      colChildren.push(new D.Paragraph({
+                        alignment: rtlTextAlign,
+                        bidirectional: true,
+                        spacing: { after: 20 },
+                        children: [new D.TextRun({ text: gt(sub), size: 18, color: '56607a', font: f, rightToLeft: true })]
+                      }));
+                    }
+                    if (note) {
+                      colChildren.push(new D.Paragraph({
+                        alignment: rtlTextAlign,
+                        bidirectional: true,
+                        spacing: { after: 40 },
+                        children: [new D.TextRun({ text: gt(note), size: 17, color: '6a7488', font: f, rightToLeft: true })]
+                      }));
+                    }
+                  });
+
+                  colEl.querySelectorAll('.lang-item').forEach(li => {
+                    colChildren.push(new D.Paragraph({
+                      alignment: rtlTextAlign,
+                      bidirectional: true,
+                      spacing: { after: 40 },
+                      children: [
+                        new D.TextRun({ text: '\u200F\u2022 ', size: 20, color: navy, font: f, rightToLeft: true }),
+                        new D.TextRun({ text: gt(li), size: 20, color: '33394a', font: f, rightToLeft: true })
+                      ]
+                    }));
+                  });
+                }
+
+                processCol(cols[0], rightColChildren);
+                processCol(cols[1], leftColChildren);
+
+                c.push(new D.Table({
+                  visuallyRightToLeft: true,
+                  columnWidths: [5103, 5103],
+                  width: { size: 10206, type: D.WidthType.DXA },
+                  borders: {
+                    top: { style: D.BorderStyle.NONE },
+                    bottom: { style: D.BorderStyle.NONE },
+                    left: { style: D.BorderStyle.NONE },
+                    right: { style: D.BorderStyle.NONE },
+                    insideHorizontal: { style: D.BorderStyle.NONE },
+                    insideVertical: { style: D.BorderStyle.SINGLE, size: 12, color: navy }
+                  },
+                  rows: [
+                    new D.TableRow({
+                      children: [
+                        new D.TableCell({
+                          width: { size: 5103, type: D.WidthType.DXA },
+                          margins: { marginUnitType: D.WidthType.DXA, left: twoColDividerPadding, right: 0 },
+                          borders: {
+                            top: { style: D.BorderStyle.NONE },
+                            bottom: { style: D.BorderStyle.NONE },
+                            left: { style: D.BorderStyle.NONE },
+                            right: { style: D.BorderStyle.NONE }
+                          },
+                          children: rightColChildren
+                        }),
+                        new D.TableCell({
+                          width: { size: 5103, type: D.WidthType.DXA },
+                          margins: { marginUnitType: D.WidthType.DXA, left: 0, right: twoColDividerPadding },
+                          borders: {
+                            top: { style: D.BorderStyle.NONE },
+                            bottom: { style: D.BorderStyle.NONE },
+                            left: { style: D.BorderStyle.NONE },
+                            right: { style: D.BorderStyle.NONE }
+                          },
+                          children: leftColChildren
+                        })
+                      ]
+                    })
+                  ]
+                }));
+              }
+              return;
+            }
+
+            const titleEl = el.querySelector('.sec-title');
+            if (!titleEl) return;
+            c.push(mkSecHead(gt(titleEl)));
+
+            const summary = el.querySelector('.summary');
+            if (summary) {
+              c.push(new D.Paragraph({
+                alignment: rtlTextAlign,
+                bidirectional: true,
+                spacing: { after: 80 },
+                children: [new D.TextRun({ text: gt(summary), size: 20, color: '33394a', font: f, rightToLeft: true, rtl: true })]
+              }));
+            }
+
+            el.querySelectorAll('.know-row').forEach(row => {
+              const label = gt(row.querySelector('.know-label'));
+              const skills = [...row.querySelectorAll('.skill')].map(s => gt(s)).join(' \u00B7 ');
+              c.push(new D.Paragraph({
+                alignment: rtlTextAlign,
+                bidirectional: true,
+                spacing: { after: 60 },
+                children: [
+                  new D.TextRun({ text: label + ':  ', bold: true, size: 19, color: navy, font: f, rightToLeft: true, rtl: true }),
+                  new D.TextRun({ text: skills, size: 19, color: '2b5aa0', font: f })
+                ]
+              }));
+            });
+
+            const knowNote = el.querySelector('.know-note');
+            if (knowNote) {
+              c.push(new D.Paragraph({
+                alignment: rtlTextAlign,
+                bidirectional: true,
+                spacing: { after: 80 },
+                children: [new D.TextRun({ text: gt(knowNote), size: 18, color: '3a4150', font: f, rightToLeft: true, rtl: true })]
+              }));
+            }
+
+            el.querySelectorAll('.exp-item').forEach(item => {
+              const yr = gt(item.querySelector('.exp-year'));
+              const co = gt(item.querySelector('.exp-company'));
+              const desc = item.querySelector('.exp-desc');
+
+              c.push(new D.Paragraph({
+                alignment: rtlTextAlign,
+                bidirectional: true,
+                spacing: { before: 100, after: 40 },
+                children: [
+                  new D.TextRun({ text: co, bold: true, size: 22, color: '16243f', font: f, rightToLeft: true, rtl: true }),
+                  new D.TextRun({ text: '    ' + yr, bold: true, size: 20, color: navy, font: f })
+                ]
+              }));
+
+              if (desc) {
+                c.push(new D.Paragraph({
+                  alignment: rtlTextAlign,
+                  bidirectional: true,
+                  spacing: { after: 40 },
+                  children: [new D.TextRun({ text: gt(desc), size: 18, color: '6a7286', font: f, italics: true, rightToLeft: true, rtl: true })]
+                }));
+              }
+
+              item.querySelectorAll('.exp-list li').forEach(li => {
+                c.push(new D.Paragraph({
+                  alignment: rtlTextAlign,
+                  bidirectional: true,
+                  spacing: { after: 20 },
+                  indent: { right: 240 },
+                  children: [
+                    new D.TextRun({ text: '\u200F\u2022 ', size: 19, color: navy, font: f, rightToLeft: true, rtl: true }),
+                    new D.TextRun({ text: gt(li), size: 19, color: '3a4150', font: f, rightToLeft: true, rtl: true })
+                  ]
+                }));
+              });
+            });
+
+            if (!el.closest('.two-col')) {
+              el.querySelectorAll('.edu-item').forEach(item => {
+                const yr = gt(item.querySelector('.edu-year'));
+                const ti = gt(item.querySelector('.edu-title'));
+                const sub = item.querySelector('.edu-sub');
+                const note = item.querySelector('.edu-note');
+
+                c.push(new D.Paragraph({
+                  alignment: rtlTextAlign,
+                  bidirectional: true,
+                  spacing: { before: 80, after: 30 },
+                  children: [
+                    new D.TextRun({ text: ti, bold: true, size: 21, color: '16243f', font: f, rightToLeft: true, rtl: true }),
+                    new D.TextRun({ text: '    ' + yr, bold: true, size: 20, color: navy, font: f })
+                  ]
+                }));
+
+                if (sub) {
+                  c.push(new D.Paragraph({
+                    alignment: rtlTextAlign,
+                    bidirectional: true,
+                    spacing: { after: 20 },
+                    children: [new D.TextRun({ text: gt(sub), size: 18, color: '56607a', font: f, rightToLeft: true, rtl: true })]
+                  }));
+                }
+
+                if (note) {
+                  c.push(new D.Paragraph({
+                    alignment: rtlTextAlign,
+                    bidirectional: true,
+                    spacing: { after: 40 },
+                    children: [new D.TextRun({ text: gt(note), size: 17, color: '6a7488', font: f, rightToLeft: true, rtl: true })]
+                  }));
+                }
+              });
+            }
+          });
+
+          const footerEl = page.querySelector('.footer');
+          if (footerEl) {
+            c.push(mkRule());
+            c.push(new D.Paragraph({
+              alignment: rtlTextAlign,
+              bidirectional: true,
+              spacing: { before: 80 },
+              shading: { type: D.ShadingType.SOLID, color: navy, fill: navy },
+              children: [new D.TextRun({ text: '  ' + gt(footerEl) + '  ', bold: true, size: 20, color: 'eef2fb', font: f, rightToLeft: true, rtl: true })]
+            }));
+          }
+
+          const pageNumEl = page.querySelector('.page-num');
+          if (pageNumEl) {
+            c.push(new D.Paragraph({
+              alignment: rtlTextAlign,
+              bidirectional: true,
+              spacing: { before: 100 },
+              children: [new D.TextRun({ text: gt(pageNumEl), size: 16, color: '9aa7c2', font: f, rightToLeft: true, rtl: true })]
+            }));
+          }
+
+          sections.push({
+            properties: {
+              page: {
+                size: { width: 11906, height: 16838 },
+                margin: { top: 720, right: 850, bottom: 720, left: 850 }
+              },
+              bidi: true
+            },
+            children: c
+          });
+        });
+
+        const wordDoc = new D.Document({
+          styles: {
+            default: {
+              document: {
+                run: {
+                  font: f,
+                  rightToLeft: true
+                },
+                paragraph: {
+                  spacing: { line: 240 },
+                  bidirectional: true,
+                  alignment: rtlTextAlign
+                }
+              }
+            }
+          },
+          sections: sections
+        });
+
+        const wordBlob = await D.Packer.toBlob(wordDoc);
+        const url = URL.createObjectURL(wordBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'איתן_ברון_קורות_חיים.docx';
+        link.click();
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        alert('שגיאה בייצוא ל-Word: ' + e.message);
+      }
+      busy(false);
+    }
+  </script>
+</body>
+
+</html>
