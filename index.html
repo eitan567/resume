@@ -1940,7 +1940,7 @@
       if (!text) return;
       ttsStop = false;
       setNarrateLabel('loading');
-      const chunks = chunkText(text, 3800);
+      const chunks = chunkText(text, 1400);
       try {
         let nextP = ttsChunk(chunks[0]);
         for (let i = 0; i < chunks.length && !ttsStop; i++) {

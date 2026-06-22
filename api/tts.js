@@ -47,9 +47,10 @@ module.exports = async (req, res) => {
     }
 
     const isEn = lang === "en";
+    // Chirp3-HD: Google's newest, most natural voices (the AI Studio ones).
     const voice = isEn
-      ? { languageCode: "en-US", name: "en-US-Neural2-D" }
-      : { languageCode: "he-IL", name: "he-IL-Wavenet-B" };
+      ? { languageCode: "en-US", name: "en-US-Chirp3-HD-Charon" }
+      : { languageCode: "he-IL", name: "he-IL-Chirp3-HD-Charon" };
 
     const r = await fetch(
       "https://texttospeech.googleapis.com/v1/text:synthesize?key=" + apiKey,
@@ -59,7 +60,7 @@ module.exports = async (req, res) => {
         body: JSON.stringify({
           input: { text },
           voice,
-          audioConfig: { audioEncoding: "MP3", speakingRate: isEn ? 1.0 : 0.97 },
+          audioConfig: { audioEncoding: "MP3" },
         }),
       }
     );
