@@ -500,7 +500,7 @@
     }
 
     .vdivider {
-      width: 2px;
+      width: 1px;
       background: var(--navy);
       align-self: stretch;
       margin: 4px 0;
@@ -521,6 +521,14 @@
       width: 2.5px;
       background: var(--rail);
       border-radius: 2px;
+    }
+
+    html.exporting-shot .experience::before,
+    html.exporting-shot .edu-timeline::before {
+      content: none !important;
+      display: none !important;
+      opacity: 0 !important;
+      background: transparent !important;
     }
 
     .edu-item {
@@ -1435,40 +1443,170 @@
       document.getElementById('btnPdf').disabled = s;
       document.getElementById('btnWord').disabled = s;
     }
+    function parseExportShadowSpread(value) {
+      const parts = String(value || '').match(/-?\d*\.?\d+px/g) || [];
+      return parts.length >= 4 ? parseFloat(parts[3]) : 0;
+    }
+    function parseExportShadowColor(value, fallback) {
+      const match = String(value || '').match(/^(rgba?\([^)]+\)|#[0-9a-fA-F]+|[a-zA-Z]+)/);
+      return match ? match[1] : fallback;
+    }
+    function exportDotPaintMetrics(dotRect, pageRect, canvasWidth, styles) {
+      const cssPx = canvasWidth / pageRect.width;
+      const borderBoxRadius = (dotRect.width / 2) * cssPx;
+      return {
+        cx: (dotRect.left - pageRect.left + dotRect.width / 2) * cssPx,
+        cy: (dotRect.top - pageRect.top + dotRect.height / 2) * cssPx,
+        outerRadius: borderBoxRadius + styles.shadowSpread * cssPx,
+        borderRadius: borderBoxRadius,
+        fillRadius: Math.max(0, borderBoxRadius - styles.borderWidth * cssPx),
+        fillStyle: styles.fillStyle,
+        borderStyle: styles.borderStyle,
+        shadowStyle: styles.shadowStyle
+      };
+    }
+    function exportTimelineRailMetrics(timelineRect, pageRect, canvasWidth, centerCssX, styles) {
+      const cssPx = canvasWidth / pageRect.width;
+      return {
+        x: centerCssX * cssPx,
+        y1: (timelineRect.top - pageRect.top + styles.top) * cssPx,
+        y2: (timelineRect.bottom - pageRect.top - styles.bottom) * cssPx,
+        lineWidth: styles.width * cssPx,
+        strokeStyle: styles.strokeStyle
+      };
+    }
+    function drawExportRail(ctx, rail) {
+      if (rail.lineWidth <= 0 || rail.y2 <= rail.y1) return;
+      ctx.beginPath();
+      ctx.moveTo(rail.x, rail.y1);
+      ctx.lineTo(rail.x, rail.y2);
+      ctx.lineWidth = rail.lineWidth;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = rail.strokeStyle;
+      ctx.stroke();
+    }
+    function eraseExportRail(ctx, rail) {
+      if (rail.lineWidth <= 0 || rail.y2 <= rail.y1) return;
+      ctx.beginPath();
+      ctx.moveTo(rail.x, rail.y1);
+      ctx.lineTo(rail.x, rail.y2);
+      ctx.lineWidth = rail.lineWidth + 8;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#fff';
+      ctx.stroke();
+    }
+    function drawExportDot(ctx, dot) {
+      [
+        [dot.outerRadius, dot.shadowStyle],
+        [dot.borderRadius, dot.borderStyle],
+        [dot.fillRadius, dot.fillStyle]
+      ].forEach(([radius, fillStyle]) => {
+        if (radius <= 0) return;
+        ctx.beginPath();
+        ctx.arc(dot.cx, dot.cy, radius, 0, 2 * Math.PI);
+        ctx.fillStyle = fillStyle;
+        ctx.fill();
+      });
+    }
     async function shot(el) {
       await document.fonts.ready;
       const scale = 3;
+      const captureRect = el.getBoundingClientRect();
+      const captureWidth = Math.ceil(captureRect.width);
+      const captureHeight = Math.ceil(Math.max(captureRect.height, el.scrollHeight));
       const canvas = await html2canvas(el, {
         scale, backgroundColor: '#ffffff', useCORS: true,
-        windowWidth: el.scrollWidth, windowHeight: el.scrollHeight,
+        width: captureWidth, height: captureHeight,
+        windowWidth: captureWidth, windowHeight: captureHeight,
         onclone: (clonedDoc) => {
-          // Only drop the box-shadow (html2canvas can't render it). The dot's
-          // navy fill + white border are captured fine and are left untouched.
-          // The live page is never modified.
+          // Export paints these tiny CSS circles manually so the PNG/PDF output
+          // matches the live browser rendering instead of html2canvas' raster.
+          clonedDoc.documentElement.classList.add('exporting-shot');
+          clonedDoc.body.style.padding = '0';
+          const clonedPage = clonedDoc.querySelector('.page');
+          if (clonedPage) {
+            clonedPage.style.width = `${captureWidth}px`;
+            clonedPage.style.maxWidth = 'none';
+          }
+          const style = clonedDoc.createElement('style');
+          style.textContent = '.experience::before, .edu-timeline::before { content: none !important; display: none !important; opacity: 0 !important; background: transparent !important; }';
+          clonedDoc.head.appendChild(style);
           clonedDoc.querySelectorAll('.exp-dot, .edu-dot').forEach(d => {
+            d.style.visibility = 'hidden';
             d.style.boxShadow = 'none';
           });
         }
       });
-      // The dots are rendered by html2canvas (navy + white border); only their
-      // outer ring (a box-shadow) is missing. ADD just that ring around each
-      // existing dot, so nothing is removed. Positions use canvas.width/rect.width
-      // so they're correct in both standard and wide views.
       const ctx = canvas.getContext('2d');
-      const pr = el.getBoundingClientRect();
-      const fx = canvas.width / pr.width;
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      const pr = captureRect;
+      el.querySelectorAll('.experience, .edu-timeline').forEach(timeline => {
+        const firstDot = timeline.querySelector('.exp-dot, .edu-dot');
+        if (!firstDot) return;
+        const timelineRect = timeline.getBoundingClientRect();
+        const dotRect = firstDot.getBoundingClientRect();
+        const css = getComputedStyle(timeline, '::before');
+        const timelineCss = getComputedStyle(timeline);
+        const railWidth = parseFloat(css.width) || 0;
+        const railTop = parseFloat(css.top) || 0;
+        const railBottom = parseFloat(css.bottom) || 0;
+        const railRight = parseFloat(css.right);
+        const railLeft = parseFloat(css.left);
+        let html2canvasRailCenter = dotRect.left - pr.left + dotRect.width / 2;
+        if (Number.isFinite(railRight)) {
+          html2canvasRailCenter =
+            timelineRect.right - pr.left -
+            (parseFloat(timelineCss.paddingLeft) || 0) -
+            railRight +
+            railWidth / 2;
+        } else if (Number.isFinite(railLeft)) {
+          html2canvasRailCenter =
+            timelineRect.left - pr.left +
+            (parseFloat(timelineCss.paddingRight) || 0) +
+            railLeft +
+            railWidth / 2;
+        }
+        const oldRail = exportTimelineRailMetrics(
+          timelineRect,
+          pr,
+          canvas.width,
+          html2canvasRailCenter,
+          {
+            top: railTop,
+            bottom: railBottom,
+            width: railWidth,
+            strokeStyle: '#fff'
+          }
+        );
+        const rail = exportTimelineRailMetrics(
+          timelineRect,
+          pr,
+          canvas.width,
+          dotRect.left - pr.left + dotRect.width / 2,
+          {
+            top: railTop,
+            bottom: railBottom,
+            width: railWidth,
+            strokeStyle: css.backgroundColor || '#b9c6dd'
+          }
+        );
+        eraseExportRail(ctx, oldRail);
+        drawExportRail(ctx, rail);
+      });
       el.querySelectorAll('.exp-dot, .edu-dot').forEach(dot => {
         const r = dot.getBoundingClientRect();
-        const cx = (r.left - pr.left + r.width / 2) * fx;
-        const cy = (r.top - pr.top + r.height / 2) * fx;
-        const radius = (r.width / 2) * fx;        // outer edge of the dot, in canvas px
-        const px = radius / 7;                    // canvas pixels per 1 CSS px
-        ctx.beginPath();
-        ctx.arc(cx, cy, radius + px, 0, 2 * Math.PI); // ring centerline, 1px outside the edge
-        ctx.lineWidth = 2 * px;                   // 2px ring (matches box-shadow spread)
-        ctx.strokeStyle = '#b9c6dd';
-        ctx.stroke();
+        const css = getComputedStyle(dot);
+        const dotMetrics = exportDotPaintMetrics(r, pr, canvas.width, {
+          borderWidth: parseFloat(css.borderTopWidth) || 0,
+          shadowSpread: parseExportShadowSpread(css.boxShadow),
+          fillStyle: css.backgroundColor,
+          borderStyle: css.borderTopColor,
+          shadowStyle: parseExportShadowColor(css.boxShadow, '#b9c6dd')
+        });
+        drawExportDot(ctx, dotMetrics);
       });
+      ctx.restore();
       return canvas;
     }
     async function exportPNG() {
