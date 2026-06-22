@@ -1885,35 +1885,99 @@
       if (document.body.classList.contains('wide')) updateWideScale();
     }
 
-    // ---- Narrate the résumé (Text-to-Speech, browser-native) ----
-    function setNarrateLabel(on) {
+    // ---- Narrate the résumé (high-quality Gemini TTS, browser fallback) ----
+    let ttsState = 'idle', ttsStop = false, ttsAudio = null;
+    function setNarrateLabel(state) {
+      ttsState = state;
       const l = document.getElementById('narrateLabel');
       const b = document.getElementById('btnNarrate');
-      if (l) l.textContent = on ? 'עצירת ההקראה' : 'הקראת קורות החיים';
-      if (b) b.classList.toggle('narrating', on);
+      if (l) l.textContent = state === 'playing' ? 'עצירת ההקראה'
+        : (state === 'loading' ? 'מכין הקראה…' : 'הקראת קורות החיים');
+      if (b) b.classList.toggle('narrating', state !== 'idle');
     }
-    function toggleNarration() {
-      const synth = window.speechSynthesis;
-      if (!synth) { alert('הדפדפן אינו תומך בהקראה.'); return; }
-      if (synth.speaking || synth.paused) { synth.cancel(); setNarrateLabel(false); return; }
+    function chunkText(text, maxLen) {
+      const parts = text.split(/(?<=[.!?:•\n])\s+/);
+      const chunks = []; let cur = '';
+      for (const p of parts) {
+        if (cur && (cur + ' ' + p).length > maxLen) { chunks.push(cur.trim()); cur = p; }
+        else cur = cur ? cur + ' ' + p : p;
+      }
+      if (cur.trim()) chunks.push(cur.trim());
+      return chunks;
+    }
+    function pcmToWavBlob(b64, sampleRate) {
+      const bin = atob(b64), len = bin.length, buf = new ArrayBuffer(44 + len), v = new DataView(buf);
+      const ws = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+      ws(0, 'RIFF'); v.setUint32(4, 36 + len, true); ws(8, 'WAVE'); ws(12, 'fmt ');
+      v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+      v.setUint32(24, sampleRate, true); v.setUint32(28, sampleRate * 2, true);
+      v.setUint16(32, 2, true); v.setUint16(34, 16, true); ws(36, 'data'); v.setUint32(40, len, true);
+      for (let i = 0; i < len; i++) v.setUint8(44 + i, bin.charCodeAt(i) & 0xff);
+      return new Blob([buf], { type: 'audio/wav' });
+    }
+    async function ttsChunk(text) {
+      const r = await fetch('/api/tts', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, voice: 'Kore' })
+      });
+      if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || ('HTTP ' + r.status)); }
+      const j = await r.json();
+      return pcmToWavBlob(j.audio, j.sampleRate || 24000);
+    }
+    function playBlob(blob) {
+      return new Promise((resolve) => {
+        const url = URL.createObjectURL(blob);
+        ttsAudio = new Audio(url);
+        ttsAudio.onended = () => { URL.revokeObjectURL(url); resolve(); };
+        ttsAudio.onerror = () => { URL.revokeObjectURL(url); resolve(); };
+        ttsAudio.play().catch(() => resolve());
+      });
+    }
+    function stopNarration() {
+      ttsStop = true;
+      if (ttsAudio) { try { ttsAudio.pause(); } catch (e) { } ttsAudio = null; }
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      setNarrateLabel('idle');
+    }
+    async function toggleNarration() {
+      if (ttsState !== 'idle') { stopNarration(); return; }
       const text = (document.getElementById('doc').innerText || '').replace(/\s+/g, ' ').trim();
       if (!text) return;
-      const u = new SpeechSynthesisUtterance(text);
+      ttsStop = false;
+      setNarrateLabel('loading');
+      const chunks = chunkText(text, 480);
+      try {
+        let nextP = ttsChunk(chunks[0]);
+        for (let i = 0; i < chunks.length && !ttsStop; i++) {
+          let blob;
+          try { blob = await nextP; }
+          catch (err) { if (i === 0) { narrateBrowserFallback(text); return; } throw err; }
+          if (ttsStop) break;
+          nextP = (i + 1 < chunks.length) ? ttsChunk(chunks[i + 1]) : null;
+          setNarrateLabel('playing');
+          await playBlob(blob);
+        }
+      } catch (err) { alert('שגיאה בהקראה: ' + err.message); }
+      if (!ttsStop) setNarrateLabel('idle');
+    }
+    // Fallback to the browser voice when /api/tts isn't reachable (opening the
+    // file locally, or before the Gemini key is configured).
+    function narrateBrowserFallback(text) {
+      const synth = window.speechSynthesis;
+      if (!synth) { setNarrateLabel('idle'); alert('ההקראה האיכותית זמינה רק באתר החי (www.eitan.work).'); return; }
       const isEn = window.__lang === 'en';
+      const u = new SpeechSynthesisUtterance(text);
       u.lang = isEn ? 'en-US' : 'he-IL';
       u.rate = isEn ? 1 : 0.98;
-      const voices = synth.getVoices();
-      const match = voices.find(v => (v.lang || '').toLowerCase().startsWith(isEn ? 'en' : 'he'));
+      const match = synth.getVoices().find(v => (v.lang || '').toLowerCase().startsWith(isEn ? 'en' : 'he'));
       if (match) u.voice = match;
-      u.onend = () => setNarrateLabel(false);
-      u.onerror = () => setNarrateLabel(false);
-      synth.cancel();
-      synth.speak(u);
-      setNarrateLabel(true);
+      u.onend = () => setNarrateLabel('idle');
+      u.onerror = () => setNarrateLabel('idle');
+      synth.cancel(); synth.speak(u);
+      setNarrateLabel('playing');
     }
-    // Voices can load asynchronously; this primes the list.
     if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = () => { };
-    window.addEventListener('beforeunload', () => { if (window.speechSynthesis) window.speechSynthesis.cancel(); });
+    window.addEventListener('beforeunload', stopNarration);
 
     // ---- Contact form (Web3Forms) & AI chat modals ----
     const WEB3FORMS_KEY = 'YOUR_WEB3FORMS_ACCESS_KEY'; // ← הדבק כאן את ה-Access Key מ-web3forms.com
