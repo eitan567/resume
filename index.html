@@ -35,67 +35,147 @@
     }
 
     body {
-      background: #5b6578;
+      background:
+        radial-gradient(1200px 680px at 50% -2%, #f2eee7 0%, #e9e4dc 58%, #ddd7cd 100%) fixed;
       font-family: 'Heebo', Arial, sans-serif;
       color: var(--ink);
       -webkit-font-smoothing: antialiased;
-      padding: 24px 12px 60px;
+      padding: 30px 296px 76px 16px;
     }
 
-    /* Toolbar (not exported) */
-    .toolbar {
-      max-width: 794px;
-      margin: 0 auto 18px;
+    /* ---- Control rail (chrome around the résumé; never exported) ---- */
+    .controls {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 264px;
+      z-index: 60;
       display: flex;
-      gap: 10px;
+      flex-direction: column;
+      gap: 22px;
+      padding: 30px 22px;
+      background: #fbf9f5;
+      border-left: 1px solid #e3ddd1;
+      box-shadow: -10px 0 34px -26px rgba(40, 34, 28, .5);
+      overflow-y: auto;
+    }
+
+    .controls-group {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .group-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .4px;
+      color: #a59c8b;
+      padding: 0 3px;
+    }
+
+    .controls .lang-switch {
+      display: flex;
+    }
+
+    .controls .lang-btn {
+      flex: 1;
+      text-align: center;
+    }
+
+    /* Export buttons — uniform, neutral, no candy colors */
+    .toolbar {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toolbar button {
       justify-content: center;
-      flex-wrap: wrap;
+    }
+
+    /* Narrower screens: fall back to a centered top bar */
+    @media (max-width: 1279px) {
+      body {
+        padding-right: 16px;
+      }
+
+      .controls {
+        position: static;
+        width: auto;
+        max-width: 880px;
+        margin: 0 auto 28px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 12px 22px;
+        border: 1px solid #e3ddd1;
+        border-radius: 14px;
+        box-shadow: 0 1px 2px rgba(40, 34, 28, .04), 0 14px 30px -20px rgba(40, 34, 28, .35);
+        overflow: visible;
+      }
+
+      .controls-group {
+        flex-direction: row;
+        align-items: center;
+        gap: 9px;
+      }
+
+      .group-label {
+        display: none;
+      }
+
+      .toolbar {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
     }
 
     .toolbar button {
       font-family: inherit;
-      font-size: 15px;
+      font-size: 13.5px;
       font-weight: 600;
-      border: none;
-      border-radius: 10px;
-      padding: 11px 20px;
+      border: 1px solid #ddd7cc;
+      border-radius: 9px;
+      padding: 9px 16px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      transition: transform .12s ease, opacity .12s;
-      box-shadow: 0 3px 10px rgba(0, 0, 0, .25);
+      background: #fff;
+      color: #353a42;
+      transition: background .14s, border-color .14s, color .14s, transform .14s, box-shadow .14s;
     }
 
     .toolbar button svg {
-      width: 18px;
-      height: 18px;
-      fill: currentColor;
-    }
-
-    .btn-png {
-      background: #1f8a4c;
-      color: #fff;
-    }
-
-    .btn-pdf {
-      background: #c0392b;
-      color: #fff;
-    }
-
-    .btn-word {
-      background: #2b579a;
-      color: #fff;
+      width: 16px;
+      height: 16px;
+      fill: #9b9384;
+      transition: fill .14s;
     }
 
     .toolbar button:hover {
-      transform: translateY(-2px);
+      background: #faf7f1;
+      border-color: #c7bfb1;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px -6px rgba(40, 34, 28, .28);
+    }
+
+    .toolbar button:hover svg {
+      fill: var(--navy);
+    }
+
+    .toolbar button:active {
+      transform: translateY(0);
     }
 
     .toolbar button:disabled {
-      opacity: .55;
+      opacity: .5;
       cursor: wait;
       transform: none;
+      box-shadow: none;
     }
 
     #doc {
@@ -686,39 +766,38 @@
       }
     }
 
-    /* Language switch (not exported) */
+    /* Segmented toggle (language / view) — chrome, not exported */
     .lang-switch {
-      max-width: 794px;
-      margin: 0 auto 12px;
-      display: flex;
-      justify-content: center;
-      gap: 0;
+      display: inline-flex;
+      gap: 3px;
+      padding: 3px;
+      background: #efebe3;
+      border: 1px solid #e4dfd5;
+      border-radius: 10px;
     }
 
     .lang-btn {
       font-family: inherit;
-      font-size: 14px;
-      font-weight: 700;
-      border: 1.5px solid var(--navy);
-      background: #fff;
-      color: var(--navy);
-      padding: 7px 22px;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      background: transparent;
+      color: #79736a;
+      padding: 7px 17px;
+      border-radius: 8px;
       cursor: pointer;
-      transition: background .12s, color .12s;
+      white-space: nowrap;
+      transition: background .15s, color .15s, box-shadow .15s;
     }
 
-    .lang-btn:first-child {
-      border-radius: 0 9px 9px 0;
-    }
-
-    .lang-btn:last-child {
-      border-radius: 9px 0 0 9px;
-      border-right: none;
+    .lang-btn:hover:not(.active) {
+      color: #2c2c2c;
     }
 
     .lang-btn.active {
-      background: var(--navy);
-      color: #fff;
+      background: #ffffff;
+      color: #1c2433;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, .14), 0 1px 1px rgba(0, 0, 0, .05);
     }
 
     /* English (LTR) — mirror direction-sensitive layout */
@@ -740,16 +819,6 @@
     [dir="ltr"] .two-col .col:last-child {
       padding-right: 0;
       padding-left: 18px;
-    }
-
-    [dir="ltr"] .lang-btn:first-child {
-      border-radius: 9px 0 0 9px;
-      border-right: none;
-    }
-
-    [dir="ltr"] .lang-btn:last-child {
-      border-radius: 0 9px 9px 0;
-      border-right: 1.5px solid var(--navy);
     }
 
     [dir="ltr"] .experience,
@@ -829,7 +898,7 @@
     }
 
     #doc.wide #stage .page:hover {
-      outline-color: #ffffff;
+      outline-color: rgba(2, 33, 89, .35);
     }
 
     /* ---- Fullscreen single-page viewer ---- */
@@ -838,7 +907,9 @@
       position: fixed;
       inset: 0;
       z-index: 1000;
-      background: rgba(20, 24, 33, .94);
+      background: rgba(28, 25, 22, .93);
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
       align-items: stretch;
       justify-content: center;
     }
@@ -861,25 +932,30 @@
       position: fixed;
       top: 50%;
       transform: translateY(-50%);
-      width: 60px;
-      height: 90px;
-      border: none;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, .14);
+      width: 58px;
+      height: 92px;
+      border: 1px solid rgba(255, 255, 255, .18);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .12);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
       color: #fff;
-      font-size: 46px;
+      font-size: 44px;
       line-height: 1;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background .12s;
+      box-shadow: 0 8px 22px -6px rgba(0, 0, 0, .5);
+      transition: background .15s, border-color .15s, transform .15s;
       z-index: 1002;
       font-family: Arial, sans-serif;
     }
 
     .fs-arrow:hover {
-      background: rgba(255, 255, 255, .3);
+      background: rgba(255, 255, 255, .26);
+      border-color: rgba(255, 255, 255, .4);
+      transform: translateY(-50%) scale(1.06);
     }
 
     .fs-left {
@@ -894,38 +970,52 @@
       position: fixed;
       top: 16px;
       right: 20px;
-      width: 44px;
-      height: 44px;
-      border: none;
+      width: 46px;
+      height: 46px;
+      border: 1px solid rgba(255, 255, 255, .18);
       border-radius: 50%;
-      background: rgba(255, 255, 255, .14);
+      background: rgba(255, 255, 255, .12);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
       color: #fff;
-      font-size: 20px;
+      font-size: 19px;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       z-index: 1002;
-      transition: background .12s;
+      transition: background .15s, transform .15s;
     }
 
     .fs-close:hover {
-      background: rgba(255, 255, 255, .3);
+      background: rgba(255, 255, 255, .26);
+      transform: scale(1.08);
     }
   </style>
 </head>
 
 <body>
 
-  <div class="lang-switch">
-    <button id="langHe" class="lang-btn active" onclick="setLang('he')">עברית</button>
-    <button id="langEn" class="lang-btn" onclick="setLang('en')">English</button>
-  </div>
+  <div class="controls">
+    <div class="controls-group">
+      <span class="group-label">שפת המסמך</span>
+      <div class="lang-switch">
+        <button id="langHe" class="lang-btn active" onclick="setLang('he')">עברית</button>
+        <button id="langEn" class="lang-btn" onclick="setLang('en')">English</button>
+      </div>
+    </div>
 
-  <div class="lang-switch">
-    <button id="viewNormal" class="lang-btn active" onclick="setView('normal')" data-en="Normal view">תצוגה
-      רגילה</button>
-    <button id="viewWide" class="lang-btn" onclick="setView('wide')" data-en="Wide view">תצוגה רחבה</button>
-  </div>
+    <div class="controls-group">
+      <span class="group-label">תצוגה</span>
+      <div class="lang-switch">
+        <button id="viewNormal" class="lang-btn active" onclick="setView('normal')">רגילה</button>
+        <button id="viewWide" class="lang-btn" onclick="setView('wide')">רחבה</button>
+      </div>
+    </div>
 
-  <div class="toolbar">
+    <div class="controls-group">
+      <span class="group-label">ייצוא</span>
+      <div class="toolbar">
     <button class="btn-png" id="btnPng" onclick="exportPNG()">
       <svg viewBox="0 0 24 24">
         <path
@@ -947,6 +1037,8 @@
       </svg>
       <span data-en="Export as Word">ייצוא כ-Word</span>
     </button>
+      </div>
+    </div>
   </div>
 
   <div id="doc">
@@ -1368,10 +1460,12 @@
     function setLang(lang) {
       lang = (lang === 'en') ? 'en' : 'he';
       window.__lang = lang;
-      const root = document.documentElement;
-      root.setAttribute('lang', lang === 'he' ? 'he' : 'en');
-      root.setAttribute('dir', lang === 'he' ? 'rtl' : 'ltr');
-      document.querySelectorAll('[data-en]').forEach(el => {
+      // Flip language/direction on the RÉSUMÉ ONLY. The surrounding chrome
+      // (sidebar, buttons) stays fixed (RTL, Hebrew labels) regardless.
+      document.documentElement.setAttribute('lang', lang === 'he' ? 'he' : 'en');
+      const docEl = document.getElementById('doc');
+      if (docEl) docEl.setAttribute('dir', lang === 'he' ? 'rtl' : 'ltr');
+      document.querySelectorAll('#doc [data-en]').forEach(el => {
         if (!i18nCache.has(el)) i18nCache.set(el, el.innerHTML);
         el.innerHTML = (lang === 'en') ? el.getAttribute('data-en') : i18nCache.get(el);
       });
@@ -1404,7 +1498,9 @@
       doc.style.height = '';
       const top = doc.getBoundingClientRect().top;
       const availH = window.innerHeight - top - 16;
-      const availW = window.innerWidth - 32;
+      // The control rail is reserved by the body's right padding, so #doc's own
+      // width already excludes it — just fit the pages within that area.
+      const availW = doc.clientWidth - 24;
       doc.style.height = availH + 'px';
       // Measure the stage's REAL (unscaled) layout size — pages can be taller
       // than A4's nominal 1123px when content (e.g. English) wraps to more lines.
