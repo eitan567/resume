@@ -15,6 +15,29 @@ function rateLimited(ip) {
   return arr.length > MAX_PER_WINDOW;
 }
 
+// Hebrew has no vowel marks, so TTS mispronounces words. Dicta Nakdan adds
+// context-aware niqqud, which dramatically improves Cloud TTS pronunciation.
+async function addNiqqud(text) {
+  try {
+    const r = await fetch("https://nakdan-2-0.loadbalancer.dicta.org.il/api", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ task: "nakdan", data: text, genre: "modern" }),
+    });
+    if (!r.ok) return text;
+    const arr = await r.json();
+    if (!Array.isArray(arr)) return text;
+    const out = arr
+      .map((it) =>
+        it.sep ? it.word : ((it.options && it.options[0]) || it.word).replace(/\|/g, "")
+      )
+      .join("");
+    return out || text;
+  } catch {
+    return text; // on any failure, fall back to the un-vocalized text
+  }
+}
+
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
     res.status(405).json({ error: "Method not allowed" });
@@ -51,6 +74,9 @@ module.exports = async (req, res) => {
     const voice = isEn
       ? { languageCode: "en-US", name: "en-US-Chirp3-HD-Charon" }
       : { languageCode: "he-IL", name: "he-IL-Chirp3-HD-Charon" };
+
+    // Vocalize Hebrew first so the voice pronounces it correctly.
+    if (!isEn) text = await addNiqqud(text);
 
     const r = await fetch(
       "https://texttospeech.googleapis.com/v1/text:synthesize?key=" + apiKey,
