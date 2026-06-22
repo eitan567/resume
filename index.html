@@ -61,6 +61,45 @@
       overflow-y: auto;
     }
 
+    .controls-header {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 0 2px 20px;
+      border-bottom: 1px solid #ece5d8;
+    }
+
+    .controls-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 11px;
+      background: var(--navy);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      box-shadow: 0 4px 12px -3px rgba(2, 33, 89, .45);
+    }
+
+    .controls-logo svg {
+      width: 21px;
+      height: 21px;
+      fill: #fff;
+    }
+
+    .controls-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--navy);
+      line-height: 1.15;
+    }
+
+    .controls-sub {
+      font-size: 12px;
+      color: #9a917f;
+      margin-top: 2px;
+    }
+
     .controls-group {
       display: flex;
       flex-direction: column;
@@ -115,6 +154,10 @@
         border-radius: 14px;
         box-shadow: 0 1px 2px rgba(40, 34, 28, .04), 0 14px 30px -20px rgba(40, 34, 28, .35);
         overflow: visible;
+      }
+
+      .controls-header {
+        display: none;
       }
 
       .controls-group {
@@ -997,6 +1040,17 @@
 <body>
 
   <div class="controls">
+    <div class="controls-header">
+      <span class="controls-logo"><svg viewBox="0 0 24 24">
+          <path
+            d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
+        </svg></span>
+      <div>
+        <div class="controls-title">קורות חיים</div>
+        <div class="controls-sub">איתן ברון · ניהול וייצוא</div>
+      </div>
+    </div>
+
     <div class="controls-group">
       <span class="group-label">שפת המסמך</span>
       <div class="lang-switch">
