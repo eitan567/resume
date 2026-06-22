@@ -22,6 +22,13 @@ function extractFunction(name) {
   throw new Error(`Could not extract ${name}`);
 }
 
+function listItemContaining(text) {
+  const items = html.match(/<li\b[\s\S]*?<\/li>/g) || [];
+  const item = items.find(candidate => candidate.includes(text));
+  assert.ok(item, `Expected a list item containing ${text}`);
+  return item;
+}
+
 const source = extractFunction('exportDotPaintMetrics');
 const exportDotPaintMetrics = vm.runInNewContext(`(${source})`);
 const railSource = extractFunction('exportTimelineRailMetrics');
@@ -116,6 +123,72 @@ assert.match(
   html,
   /ctx\.setTransform\(1,\s*0,\s*0,\s*1,\s*0,\s*0\)/,
   'shot() should reset the html2canvas context transform before painting export-only dots'
+);
+assert.doesNotMatch(
+  html,
+  /Adobe Stock|Etsy|אומנות דיגיטלית|digital art/,
+  'Independent work should stay focused on software development, not digital art sales'
+);
+assert.doesNotMatch(
+  html,
+  /יוצר[\s\S]*אלבומים דיגיטליים|digital album creator/,
+  'Independent development bullet should not include the digital album creator example'
+);
+assert.match(
+  html,
+  /<button[^>]*id="viewNormal"[^>]*data-en="Normal view"[^>]*>תצוגה רגילה<\/button>/,
+  'Normal view button should be translated in English mode'
+);
+assert.match(
+  html,
+  /<button[^>]*id="viewWide"[^>]*data-en="Wide view"[^>]*>תצוגה רחבה<\/button>/,
+  'Wide view button should be translated in English mode'
+);
+assert.doesNotMatch(
+  html,
+  /מערכות שפיתחתי בבנק|Systems I developed at the bank/,
+  'Discount systems should be merged into the per-system bullets without a duplicated overview bullet'
+);
+assert.doesNotMatch(
+  html,
+  /class="exp-subhead"/,
+  'Discount projects should not use a standalone heading'
+);
+assert.match(
+  html,
+  /<li class="exp-projects">[\s\S]*פרויקטים מרכזיים שעבדתי[\s\S]*עליהם:[\s\S]*<ul class="exp-project-list">[\s\S]*<b>מפנה<\/b>[\s\S]*<b>תצפית<\/b>[\s\S]*<span class="en"><b>CCM<\/b><\/span>/,
+  'Discount projects should be nested under one bullet heading'
+);
+assert.match(
+  html,
+  /\.exp-project-list\s*\{[\s\S]*margin:[\s\S]*padding:/,
+  'Nested project bullets should have compact list styling'
+);
+
+const mafneItem = listItemContaining('<b>מפנה</b>');
+assert.match(mafneItem, /מערכת לניהול ייעוציים פנסיוניים ללקוחות הבנק[\s\S]*ASP\.NET[\s\S]*SSRS/);
+assert.match(mafneItem, /פיתחתי דפים חדשים[\s\S]*ערכתי דפים קיימים רבים[\s\S]*דוחות[\s\S]*SSRS/);
+
+const tatzpitItem = listItemContaining('<b>תצפית</b>');
+assert.match(tatzpitItem, /מערכת הייעוץ של שוק ההון ללקוחות העסקיים של[\s\S]*דיסקונט[\s\S]*JAVA\/J2EE[\s\S]*JSP[\s\S]*JASPER/);
+assert.match(tatzpitItem, /פיתחתי רבות גם[\s\S]*UI[\s\S]*צד שרת[\s\S]*קישור למסד נתונים[\s\S]*דוחות[\s\S]*JASPER/);
+
+const ccmItem = listItemContaining('<span class="en"><b>CCM</b></span>');
+assert.match(ccmItem, /מערכת קשרי לקוחות וניהול מגבלות לוגיות על שליחת הודעות[\s\S]*מיילים/);
+assert.match(ccmItem, /C#[\s\S]*Vue\.js 2\.0[\s\S]*NET Core 3\.1/);
+assert.match(ccmItem, /יצרתי את ה-[\s\S]*UI[\s\S]*עבדתי רבות ב-[\s\S]*UI/);
+const crossSystemItem = listItemContaining('מערכות <span class="en">Web</span> בנקאיות קריטיות');
+assert.match(crossSystemItem, /שדרוג ממשקים[\s\S]*מערכות ליבה ותיקות[\s\S]*טכנולוגיות חדשות/);
+assert.doesNotMatch(crossSystemItem, /Java\/J2EE|ASP\.NET|Vue\.js 2\.0|NET Core 3\.1/);
+assert.match(
+  html,
+  /ממשק שוטף מול גורמים עסקיים ומשתמשי קצה בבנק/,
+  'Discount experience should keep the original stakeholder interface bullet'
+);
+assert.match(
+  html,
+  /היכרות עמוקה עם מערכות הבנק ונהליו/,
+  'Discount experience should keep the original bank familiarity bullet'
 );
 
 console.log('export dot paint metrics match the CSS dot geometry');

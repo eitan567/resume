@@ -305,7 +305,7 @@
     }
 
     .summary {
-      font-size: 14px;
+      font-size: 13px;
       line-height: 1.62;
       color: #33394a;
       text-align: justify;
@@ -455,6 +455,32 @@
       height: 5px;
       border-radius: 50%;
       background: var(--navy);
+    }
+
+    .exp-project-title {
+      font-weight: 600;
+      color: #3a4150;
+    }
+
+    .exp-project-list {
+      margin: 3px 0 1px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .exp-project-list li {
+      padding-right: 13px;
+      margin-bottom: 2px;
+      font-size: 12.8px;
+      line-height: 1.35;
+    }
+
+    .exp-project-list li::before {
+      right: 1px;
+      top: 7px;
+      width: 4px;
+      height: 4px;
+      background: var(--rail);
     }
 
     .exp-list li .en {
@@ -894,8 +920,8 @@
   </div>
 
   <div class="lang-switch">
-    <button id="viewNormal" class="lang-btn active" onclick="setView('normal')">תצוגה רגילה</button>
-    <button id="viewWide" class="lang-btn" onclick="setView('wide')">תצוגה רחבה</button>
+    <button id="viewNormal" class="lang-btn active" onclick="setView('normal')" data-en="Normal view">תצוגה רגילה</button>
+    <button id="viewWide" class="lang-btn" onclick="setView('wide')" data-en="Wide view">תצוגה רחבה</button>
   </div>
 
   <div class="toolbar">
@@ -980,8 +1006,8 @@
             <span class="sec-title" data-en="Professional Summary">תקציר מקצועי</span>
           </div>
           <p class="summary"
-            data-en="Software developer with ~18 years of experience, including ~11 at Discount Bank — deep familiarity with the bank's systems, enabling fast integration and immediate contribution. Expertise in Java/J2EE, ASP.NET C#, .NET Core and Vue.js, alongside modern tools (React, Python, AI). Excellent communication and business acumen.">
-            מפתח תוכנה עם כ-18 שנות ניסיון, מתוכן כ-11 בבנק דיסקונט — היכרות עמוקה עם מערכות הבנק המאפשרת השתלבות ותרומה
+            data-en="Software developer with ~18 years of experience — deep familiarity with the bank's systems, enabling fast integration and immediate contribution. Expertise in Java/J2EE, ASP.NET C#, .NET Core and Vue.js, alongside modern tools (React, Python, AI). Excellent communication and business acumen.">
+            מפתח תוכנה עם כ-18 שנות ניסיון — היכרות עמוקה עם מערכות הבנק המאפשרת השתלבות ותרומה
             מיידית. מומחיות ב-<span class="ltr">Java/J2EE</span>, <span class="ltr">ASP.NET C#</span>, <span
               class="ltr">.NET Core</span> ו-<span class="ltr">Vue.js</span>, לצד כלים מודרניים (<span
               class="ltr">React,
@@ -1008,18 +1034,13 @@
                 ויזמות דיגיטלית | מפתח <span class="en">Full-Stack</span></div>
               <ul class="exp-list">
                 <li
-                  data-en="Independent end-to-end development of complete Web applications available online (such as a digital album creator), using advanced AI tools — see www.eitan.work.">
-                  פיתוח עצמאי של אפליקציות <span class="en">Web</span> מלאות מקצה לקצה, הזמינות באינטרנט (כגון יוצר
-                  אלבומים דיגיטליים), בעזרת כלי <span class="en">AI</span> מתקדמים — ראו <span
-                    class="ltr">www.eitan.work</span>.</li>
+                  data-en="Independent end-to-end development of complete Web applications using advanced AI tools — see www.eitan.work.">
+                  פיתוח עצמאי של אפליקציות <span class="en">Web</span> מלאות מקצה לקצה, בעזרת כלי <span
+                    class="en">AI</span> מתקדמים — ראו <span class="ltr">www.eitan.work</span>.</li>
                 <li
                   data-en="Hands-on depth in modern technologies: React, Next.js, Three.js, Python and AI-driven development.">
                   העמקה מעשית בטכנולוגיות מודרניות: <span class="en">React, Next.js, Three.js, Python</span> ופיתוח
                   מונחה-<span class="en">AI</span>.</li>
-                <li
-                  data-en="Creating and selling digital content as an Adobe Stock Contributor and on Etsy (AI-based digital art).">
-                  יצירה ומכירה של תוכן דיגיטלי כ-<span class="en">Adobe Stock Contributor</span> ובפלטפורמת <span
-                    class="en">Etsy</span> (אומנות דיגיטלית מבוססת <span class="en">AI</span>).</li>
               </ul>
             </div>
             <div class="exp-item">
@@ -1028,19 +1049,35 @@
               <div class="exp-company" data-en="Discount Bank (via Yael Software) | Software Developer">בנק דיסקונט
                 (באמצעות יעל תוכנה) | מפתח תוכנה</div>
               <ul class="exp-list">
-                <li
-                  data-en="Systems I developed at the bank: <b>Mafne</b> (pension advisory), <b>Tatzpit</b> (investment portfolio management), and <b>CCM</b> (customer relationship management).">
-                  מערכות שפיתחתי בבנק : <b>מפנה</b> (ייעוץ פנסיוני), <b>תצפית</b> (ניהול תיקי השקעות)
-                  ו-<span class="en"><b>CCM</b></span> (מערכת קשרי לקוחות).</li>
-                <li
-                  data-en="Development, maintenance and upgrading of mission-critical banking Web systems over ~11 years, in Java/J2EE and ASP.NET / C#.">
-                  פיתוח, תחזוקה ושדרוג של מערכות <span class="en">Web</span> בנקאיות קריטיות לאורך כ-11 שנים, בסביבת
-                  <span class="en">Java/J2EE</span> ו-<span class="en">ASP.NET / C#</span>.
+                <li class="exp-projects">
+                  <span class="exp-project-title" data-en="Selected projects I worked on:">פרויקטים מרכזיים שעבדתי
+                    עליהם:</span>
+                  <ul class="exp-project-list">
+                    <li
+                      data-en="<b>Mafne</b> — pension advisory management for bank customers (<span class='en'>ASP.NET, SSRS</span>): developed new pages, edited many existing pages, created SSRS reports, and worked on server-side code and databases.">
+                      <b>מפנה</b> — מערכת לניהול ייעוציים פנסיוניים ללקוחות הבנק (<span class="en">ASP.NET,
+                        SSRS</span>): פיתחתי דפים חדשים וערכתי דפים קיימים רבים, כולל יצירת דוחות <span
+                        class="en">SSRS</span> ועבודה בצד השרת ובמסדי הנתונים.
+                    </li>
+                    <li
+                      data-en="<b>Tatzpit</b> — Discount's capital-market advisory system for business customers (<span class='en'>JAVA/J2EE, JSP, JASPER</span>): developed extensive UI and server-side functionality, database integrations, and Jasper report development and maintenance.">
+                      <b>תצפית</b> — מערכת הייעוץ של שוק ההון ללקוחות העסקיים של דיסקונט (<span class="en">JAVA/J2EE,
+                        JSP, JASPER</span>): פיתחתי רבות גם <span class="en">UI</span> וגם צד שרת וקישור למסד נתונים,
+                      כולל פיתוח ותחזוקה של דוחות <span class="en">JASPER</span>.
+                    </li>
+                    <li
+                      data-en="<b>CCM</b> — customer relationship management and logical constraints for email messaging and more (<span class='en'>C#, Vue.js 2.0, .NET Core 3.1</span>): created the system UI, worked extensively on the UI, and also worked on server-side development part of the time.">
+                      <span class="en"><b>CCM</b></span> — מערכת קשרי לקוחות וניהול מגבלות לוגיות על שליחת הודעות
+                      מיילים ועוד (<span class="en">C#, Vue.js 2.0, .NET Core 3.1</span>): יצרתי את ה-<span
+                        class="en">UI</span> של המערכת, עבדתי רבות ב-<span class="en">UI</span> וגם בחלק מהזמן על צד
+                      שרת.
+                    </li>
+                  </ul>
                 </li>
                 <li
-                  data-en="Modernization of user interfaces to Vue.js 2.0 and .NET Core 3.1, bridging legacy core systems with new technologies.">
-                  מודרניזציה של ממשקי משתמש לטכנולוגיות <span class="en">Vue.js 2.0</span> ו-<span class="en">.NET Core
-                    3.1</span>, וגישור בין מערכות ליבה ותיקות לטכנולוגיות חדשות.</li>
+                  data-en="Cross-system contribution to development, maintenance and upgrading of mission-critical banking Web systems, including interface modernization, connecting legacy core systems with new technologies, and improving maintainability in production.">
+                  תרומה רוחבית לפיתוח, תחזוקה ושדרוג של מערכות <span class="en">Web</span> בנקאיות קריטיות, כולל
+                  שדרוג ממשקים, חיבור בין מערכות ליבה ותיקות לטכנולוגיות חדשות ושיפור תחזוקתיות בסביבת ייצור.</li>
                 <li
                   data-en="Ongoing interface with business stakeholders and end users — requirements analysis, troubleshooting and production deployment.">
                   ממשק שוטף מול גורמים עסקיים ומשתמשי קצה בבנק — אפיון, פתרון תקלות והטמעה בסביבת ייצור.</li>
