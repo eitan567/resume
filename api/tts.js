@@ -71,7 +71,15 @@ module.exports = async (req, res) => {
     const data = part && part.inlineData && part.inlineData.data;
     const mime = (part && part.inlineData && part.inlineData.mimeType) || "audio/L16;rate=24000";
     if (!data) {
-      res.status(502).json({ error: "No audio returned from TTS." });
+      res.status(502).json({
+        error: "No audio returned from TTS.",
+        debug: {
+          finishReason: response && response.candidates && response.candidates[0] && response.candidates[0].finishReason,
+          candCount: response && response.candidates && response.candidates.length,
+          partKeys: part ? Object.keys(part) : null,
+          text: (response && response.text) ? String(response.text).slice(0, 300) : null,
+        },
+      });
       return;
     }
     const m = /rate=(\d+)/.exec(mime);
