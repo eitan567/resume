@@ -1788,7 +1788,7 @@
                         alignment: rtlTextAlign,
                         bidirectional: docRtl,
                         spacing: { after: 60 },
-                        children: [new D.TextRun({ text: gt(document.querySelector('.subtitle')), bold: true, size: 22, color: navy, font: f, rightToLeft: true })]
+                        children: [new D.TextRun({ text: gt(document.querySelector('.subtitle')), bold: true, size: 22, color: navy, font: f, rightToLeft: false })]
                       }),
                       new D.Paragraph({
                         alignment: rtlTextAlign,
@@ -1877,8 +1877,8 @@
                       bidirectional: docRtl,
                       spacing: { before: 60, after: 30 },
                       children: [
-                        new D.TextRun({ text: ti, bold: true, size: 21, color: '16243f', font: f, rightToLeft: true }),
-                        new D.TextRun({ text: '    ' + yr, bold: true, size: 20, color: navy, font: f })
+                        new D.TextRun({ text: yr + '    ', bold: true, size: 20, color: navy, font: f }),
+                        new D.TextRun({ text: ti, bold: true, size: 21, color: '16243f', font: f, rightToLeft: true })
                       ]
                     }));
                     if (sub) {
@@ -1982,7 +1982,7 @@
                 bidirectional: docRtl,
                 spacing: { after: 60 },
                 children: [
-                  new D.TextRun({ text: label + ':  ', bold: true, size: 19, color: navy, font: f, rightToLeft: docRtl, rtl: docRtl }),
+                  new D.TextRun({ text: label + ':  ' + (docRtl ? '‏' : ''), bold: true, size: 19, color: navy, font: f, rightToLeft: docRtl, rtl: docRtl }),
                   new D.TextRun({ text: skills, size: 19, color: '2b5aa0', font: f })
                 ]
               }));
@@ -1998,8 +1998,8 @@
                 bidirectional: docRtl,
                 spacing: { before: 100, after: 40 },
                 children: [
-                  new D.TextRun({ text: co, bold: true, size: 22, color: '16243f', font: f, rightToLeft: docRtl, rtl: docRtl }),
-                  new D.TextRun({ text: '    ' + yr, bold: true, size: 20, color: navy, font: f })
+                  new D.TextRun({ text: yr + '    ', bold: true, size: 20, color: navy, font: f }),
+                  new D.TextRun({ text: co, bold: true, size: 22, color: '16243f', font: f, rightToLeft: docRtl, rtl: docRtl })
                 ]
               }));
 
@@ -2051,8 +2051,8 @@
                   bidirectional: docRtl,
                   spacing: { before: 80, after: 30 },
                   children: [
-                    new D.TextRun({ text: ti, bold: true, size: 21, color: '16243f', font: f, rightToLeft: docRtl, rtl: docRtl }),
-                    new D.TextRun({ text: '    ' + yr, bold: true, size: 20, color: navy, font: f })
+                    new D.TextRun({ text: yr + '    ', bold: true, size: 20, color: navy, font: f }),
+                    new D.TextRun({ text: ti, bold: true, size: 21, color: '16243f', font: f, rightToLeft: docRtl, rtl: docRtl })
                   ]
                 }));
 
