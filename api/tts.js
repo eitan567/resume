@@ -39,7 +39,8 @@ module.exports = async (req, res) => {
     }
     text = text.slice(0, 4800); // Cloud TTS allows up to ~5000 chars per request
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    // Dedicated TTS key (Cloud Text-to-Speech), falling back to the Gemini key.
+    const apiKey = process.env.GOOGLE_TTS_KEY || process.env.GEMINI_API_KEY;
     if (!apiKey) {
       res.status(500).json({ error: "API key is not configured on the server." });
       return;
