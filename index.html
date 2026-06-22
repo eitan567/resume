@@ -134,6 +134,16 @@
       justify-content: center;
     }
 
+    .toolbar button.narrating {
+      background: var(--navy);
+      border-color: var(--navy);
+      color: #fff;
+    }
+
+    .toolbar button.narrating svg {
+      fill: #fff;
+    }
+
     /* Narrower screens: fall back to a centered top bar */
     @media (max-width: 1279px) {
       body {
@@ -1034,6 +1044,278 @@
       background: rgba(255, 255, 255, .26);
       transform: scale(1.08);
     }
+
+    /* ---- Accent (primary) rail button ---- */
+    .toolbar button.btn-accent {
+      background: var(--navy);
+      border-color: var(--navy);
+      color: #fff;
+    }
+
+    .toolbar button.btn-accent svg {
+      fill: #fff;
+    }
+
+    .toolbar button.btn-accent:hover {
+      background: #0a2a63;
+      border-color: #0a2a63;
+    }
+
+    .toolbar button.btn-accent:hover svg {
+      fill: #fff;
+    }
+
+    /* ---- Modals (contact + chat) ---- */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(28, 25, 22, .55);
+      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: 16px;
+      width: min(540px, 100%);
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 30px 80px -20px rgba(0, 0, 0, .5);
+      animation: modalIn .18s ease;
+    }
+
+    @keyframes modalIn {
+      from {
+        transform: translateY(10px);
+        opacity: 0;
+      }
+
+      to {
+        transform: none;
+        opacity: 1;
+      }
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 20px;
+      border-bottom: 1px solid #eee6d8;
+      background: #fffdfa;
+    }
+
+    .modal-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--navy);
+    }
+
+    .modal-close {
+      width: 34px;
+      height: 34px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: #8a8275;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background .12s, color .12s;
+    }
+
+    .modal-close:hover {
+      background: #f0ebe1;
+      color: #333;
+    }
+
+    .modal-body {
+      padding: 20px;
+      overflow: auto;
+    }
+
+    /* Contact form */
+    .contact-form {
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+    }
+
+    .contact-form label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #444b54;
+    }
+
+    .contact-form input,
+    .contact-form textarea {
+      font-family: inherit;
+      font-size: 14px;
+      border: 1px solid #ddd6ca;
+      border-radius: 9px;
+      padding: 10px 12px;
+      background: #fcfaf6;
+      color: #2b2f36;
+      resize: vertical;
+      transition: border-color .14s, box-shadow .14s;
+    }
+
+    .contact-form input:focus,
+    .contact-form textarea:focus {
+      outline: none;
+      border-color: var(--navy);
+      box-shadow: 0 0 0 3px rgba(2, 33, 89, .1);
+    }
+
+    .form-submit {
+      margin-top: 4px;
+      font-family: inherit;
+      font-size: 14.5px;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      padding: 11px;
+      cursor: pointer;
+      background: var(--navy);
+      color: #fff;
+      transition: background .14s, opacity .14s;
+    }
+
+    .form-submit:hover {
+      background: #0a2a63;
+    }
+
+    .form-submit:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+
+    .form-status {
+      font-size: 13px;
+      margin: 4px 0 0;
+      min-height: 18px;
+    }
+
+    .form-status.ok {
+      color: #1c8049;
+    }
+
+    .form-status.err {
+      color: #b8331f;
+    }
+
+    /* Chat */
+    .modal-chat {
+      width: min(560px, 100%);
+      height: min(640px, 88vh);
+    }
+
+    .chat-messages {
+      flex: 1 1 auto;
+      overflow-y: auto;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+      background: #faf8f4;
+    }
+
+    .chat-msg {
+      max-width: 86%;
+      padding: 10px 13px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .chat-msg.user {
+      align-self: flex-start;
+      background: var(--navy);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .chat-msg.bot {
+      align-self: flex-end;
+      background: #fff;
+      color: #2b2f36;
+      border: 1px solid #e7e0d4;
+      border-bottom-left-radius: 4px;
+    }
+
+    .chat-msg.typing {
+      color: #8a8275;
+      font-style: italic;
+    }
+
+    .chat-input-row {
+      display: flex;
+      gap: 8px;
+      padding: 12px 14px;
+      border-top: 1px solid #eee6d8;
+      background: #fffdfa;
+    }
+
+    .chat-input-row input {
+      flex: 1;
+      font-family: inherit;
+      font-size: 14px;
+      border: 1px solid #ddd6ca;
+      border-radius: 10px;
+      padding: 10px 14px;
+      background: #fcfaf6;
+      color: #2b2f36;
+    }
+
+    .chat-input-row input:focus {
+      outline: none;
+      border-color: var(--navy);
+      box-shadow: 0 0 0 3px rgba(2, 33, 89, .1);
+    }
+
+    .chat-input-row button {
+      flex: 0 0 auto;
+      width: 42px;
+      border: none;
+      border-radius: 10px;
+      background: var(--navy);
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .14s;
+    }
+
+    .chat-input-row button:hover {
+      background: #0a2a63;
+    }
+
+    .chat-input-row button svg {
+      width: 20px;
+      height: 20px;
+      fill: #fff;
+    }
+
+    .chat-input-row button:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
   </style>
 </head>
 
@@ -1091,6 +1373,39 @@
       </svg>
       <span data-en="Export as Word">ייצוא כ-Word</span>
     </button>
+      </div>
+    </div>
+
+    <div class="controls-group">
+      <span class="group-label">אינטראקציה</span>
+      <div class="toolbar">
+        <button id="btnChat" class="btn-accent" onclick="openModal('chat')">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z" />
+          </svg>
+          <span>שאל את ה‑AI על איתן</span>
+        </button>
+        <button id="btnContact" onclick="openModal('contact')">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+          </svg>
+          <span>צור קשר</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="controls-group">
+      <span class="group-label">כלים</span>
+      <div class="toolbar">
+        <button id="btnNarrate" onclick="toggleNarration()">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
+          </svg>
+          <span id="narrateLabel">הקראת קורות החיים</span>
+        </button>
       </div>
     </div>
   </div>
@@ -1504,6 +1819,46 @@
     <button id="fsClose" class="fs-close" onclick="closeFullscreen()" aria-label="close">&#10005;</button>
   </div>
 
+  <!-- ===================== Contact modal ===================== -->
+  <div class="modal-overlay" id="contactModal" onclick="if(event.target===this)closeModal('contact')">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <span class="modal-title">צור קשר עם איתן</span>
+        <button class="modal-close" onclick="closeModal('contact')" aria-label="סגור">&#10005;</button>
+      </div>
+      <div class="modal-body">
+        <form id="contactForm" class="contact-form">
+          <label>שם מלא <input type="text" name="name" required autocomplete="name"></label>
+          <label>אימייל <input type="email" name="email" required autocomplete="email"></label>
+          <label>טלפון <input type="tel" name="phone" autocomplete="tel"></label>
+          <label>הודעה <textarea name="message" rows="4" required></textarea></label>
+          <button type="submit" class="form-submit" id="contactSubmit">שליחה</button>
+          <p class="form-status" id="contactStatus"></p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== AI chat modal ===================== -->
+  <div class="modal-overlay" id="chatModal" onclick="if(event.target===this)closeModal('chat')">
+    <div class="modal modal-chat" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <span class="modal-title">העוזר החכם של איתן</span>
+        <button class="modal-close" onclick="closeModal('chat')" aria-label="סגור">&#10005;</button>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <form id="chatForm" class="chat-input-row">
+        <input type="text" id="chatInput" placeholder="שאל שאלה על הניסיון, הכישורים או הזמינות של איתן…"
+          autocomplete="off">
+        <button type="submit" id="chatSend" aria-label="שלח">
+          <svg viewBox="0 0 24 24">
+            <path d="M2 21l21-9L2 3v7l15 2-15 2z" />
+          </svg>
+        </button>
+      </form>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
@@ -1529,6 +1884,119 @@
       document.title = (lang === 'en') ? 'Eitan Baron — Resume' : 'איתן ברון — קורות חיים';
       if (document.body.classList.contains('wide')) updateWideScale();
     }
+
+    // ---- Narrate the résumé (Text-to-Speech, browser-native) ----
+    function setNarrateLabel(on) {
+      const l = document.getElementById('narrateLabel');
+      const b = document.getElementById('btnNarrate');
+      if (l) l.textContent = on ? 'עצירת ההקראה' : 'הקראת קורות החיים';
+      if (b) b.classList.toggle('narrating', on);
+    }
+    function toggleNarration() {
+      const synth = window.speechSynthesis;
+      if (!synth) { alert('הדפדפן אינו תומך בהקראה.'); return; }
+      if (synth.speaking || synth.paused) { synth.cancel(); setNarrateLabel(false); return; }
+      const text = (document.getElementById('doc').innerText || '').replace(/\s+/g, ' ').trim();
+      if (!text) return;
+      const u = new SpeechSynthesisUtterance(text);
+      const isEn = window.__lang === 'en';
+      u.lang = isEn ? 'en-US' : 'he-IL';
+      u.rate = isEn ? 1 : 0.98;
+      const voices = synth.getVoices();
+      const match = voices.find(v => (v.lang || '').toLowerCase().startsWith(isEn ? 'en' : 'he'));
+      if (match) u.voice = match;
+      u.onend = () => setNarrateLabel(false);
+      u.onerror = () => setNarrateLabel(false);
+      synth.cancel();
+      synth.speak(u);
+      setNarrateLabel(true);
+    }
+    // Voices can load asynchronously; this primes the list.
+    if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = () => { };
+    window.addEventListener('beforeunload', () => { if (window.speechSynthesis) window.speechSynthesis.cancel(); });
+
+    // ---- Contact form (Web3Forms) & AI chat modals ----
+    const WEB3FORMS_KEY = 'YOUR_WEB3FORMS_ACCESS_KEY'; // ← הדבק כאן את ה-Access Key מ-web3forms.com
+    function openModal(which) {
+      document.getElementById(which === 'chat' ? 'chatModal' : 'contactModal').classList.add('open');
+      if (which === 'chat') {
+        if (!document.getElementById('chatMessages').dataset.greeted) greetChat();
+        setTimeout(() => document.getElementById('chatInput').focus(), 60);
+      } else {
+        setTimeout(() => document.querySelector('#contactForm input[name=name]').focus(), 60);
+      }
+      document.addEventListener('keydown', modalEsc);
+    }
+    function closeModal(which) {
+      document.getElementById(which === 'chat' ? 'chatModal' : 'contactModal').classList.remove('open');
+    }
+    function modalEsc(e) { if (e.key === 'Escape') { closeModal('chat'); closeModal('contact'); } }
+
+    document.getElementById('contactForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target, btn = document.getElementById('contactSubmit'), status = document.getElementById('contactStatus');
+      if (WEB3FORMS_KEY.indexOf('YOUR_') === 0) {
+        status.className = 'form-status err';
+        status.textContent = 'הטופס עדיין לא הוגדר (חסר Access Key מ-web3forms.com).';
+        return;
+      }
+      const data = Object.fromEntries(new FormData(form));
+      data.access_key = WEB3FORMS_KEY;
+      data.subject = 'פנייה מאתר קורות החיים — ' + (data.name || '');
+      data.from_name = 'אתר קורות החיים של איתן';
+      btn.disabled = true; status.className = 'form-status'; status.textContent = 'שולח…';
+      try {
+        const r = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const j = await r.json();
+        if (j.success) { status.className = 'form-status ok'; status.textContent = 'תודה! ההודעה נשלחה בהצלחה.'; form.reset(); }
+        else { status.className = 'form-status err'; status.textContent = 'שליחה נכשלה: ' + (j.message || 'שגיאה'); }
+      } catch (err) { status.className = 'form-status err'; status.textContent = 'שגיאת רשת. נסה שוב מאוחר יותר.'; }
+      btn.disabled = false;
+    });
+
+    const chatHistory = [];
+    function addChatMsg(text, who) {
+      const box = document.getElementById('chatMessages');
+      const div = document.createElement('div');
+      div.className = 'chat-msg ' + who;
+      div.textContent = text;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+      return div;
+    }
+    function greetChat() {
+      document.getElementById('chatMessages').dataset.greeted = '1';
+      addChatMsg('שלום! אני העוזר החכם של איתן ברון. אפשר לשאול אותי על הניסיון, הכישורים, הפרויקטים או הזמינות שלו — בעברית או באנגלית.', 'bot');
+    }
+    document.getElementById('chatForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('chatInput'), send = document.getElementById('chatSend');
+      const msg = input.value.trim();
+      if (!msg) return;
+      addChatMsg(msg, 'user');
+      input.value = ''; send.disabled = true;
+      const typing = addChatMsg('מקליד…', 'bot typing');
+      try {
+        const r = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: msg, history: chatHistory.slice(-10) })
+        });
+        const j = await r.json();
+        typing.remove();
+        const reply = j.response || j.error || 'סליחה, חלה שגיאה. נסה שוב.';
+        addChatMsg(reply, 'bot');
+        chatHistory.push({ sender: 'user', text: msg }, { sender: 'assistant', text: reply });
+      } catch (err) {
+        typing.remove();
+        addChatMsg('שגיאת רשת — הצ׳אט פעיל רק כשהאתר פרוס בשרת (לא בפתיחה מקומית של הקובץ).', 'bot');
+      }
+      send.disabled = false; input.focus();
+    });
 
     // ---- View switch (standard / wide) ----
     const WIDE_GAP = 30, PAGE_W = 794, PAGE_H = 1123;
