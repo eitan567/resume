@@ -1905,24 +1905,19 @@
       if (cur.trim()) chunks.push(cur.trim());
       return chunks;
     }
-    function pcmToWavBlob(b64, sampleRate) {
-      const bin = atob(b64), len = bin.length, buf = new ArrayBuffer(44 + len), v = new DataView(buf);
-      const ws = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
-      ws(0, 'RIFF'); v.setUint32(4, 36 + len, true); ws(8, 'WAVE'); ws(12, 'fmt ');
-      v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
-      v.setUint32(24, sampleRate, true); v.setUint32(28, sampleRate * 2, true);
-      v.setUint16(32, 2, true); v.setUint16(34, 16, true); ws(36, 'data'); v.setUint32(40, len, true);
-      for (let i = 0; i < len; i++) v.setUint8(44 + i, bin.charCodeAt(i) & 0xff);
-      return new Blob([buf], { type: 'audio/wav' });
+    function b64ToBlob(b64, mime) {
+      const bin = atob(b64), arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      return new Blob([arr], { type: mime || 'audio/mpeg' });
     }
     async function ttsChunk(text) {
       const r = await fetch('/api/tts', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, voice: 'Kore' })
+        body: JSON.stringify({ text, lang: window.__lang })
       });
       if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || ('HTTP ' + r.status)); }
       const j = await r.json();
-      return pcmToWavBlob(j.audio, j.sampleRate || 24000);
+      return b64ToBlob(j.audio, j.mime);
     }
     function playBlob(blob) {
       return new Promise((resolve) => {
@@ -1945,7 +1940,7 @@
       if (!text) return;
       ttsStop = false;
       setNarrateLabel('loading');
-      const chunks = chunkText(text, 480);
+      const chunks = chunkText(text, 3800);
       try {
         let nextP = ttsChunk(chunks[0]);
         for (let i = 0; i < chunks.length && !ttsStop; i++) {
