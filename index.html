@@ -1892,8 +1892,13 @@
       if (document.body.classList.contains('wide')) updateWideScale();
     }
 
-    // ---- Narrate the résumé (high-quality Gemini TTS, browser fallback) ----
-    let ttsState = 'idle', ttsStop = false, ttsAudio = null;
+    // ---- Narrate the résumé ----
+    // Primary: Gemini Live API (native audio — very human, excellent Hebrew),
+    // run in the browser with a short-lived server-minted token (the API key
+    // never reaches the client). Fallbacks: Cloud TTS, then the browser voice.
+    let ttsState = 'idle';
+    let liveSession = null, liveCtx = null, liveSources = [], liveStop = false, liveNextTime = 0;
+    let cloudAudio = null;
     function setNarrateLabel(state) {
       ttsState = state;
       const l = document.getElementById('narrateLabel');
@@ -1902,6 +1907,100 @@
         : (state === 'loading' ? 'מכין הקראה…' : 'הקראת קורות החיים');
       if (b) b.classList.toggle('narrating', state !== 'idle');
     }
+    function narrationText() {
+      return (document.getElementById('doc').innerText || '')
+        .replace(/[ \t]+/g, ' ').replace(/\n{2,}/g, '\n').trim();
+    }
+    function stopNarration() {
+      liveStop = true;
+      if (liveSession) { try { liveSession.close(); } catch (e) { } liveSession = null; }
+      liveSources.forEach(s => { try { s.stop(); } catch (e) { } }); liveSources = [];
+      if (liveCtx) { try { liveCtx.close(); } catch (e) { } liveCtx = null; }
+      if (cloudAudio) { try { cloudAudio.pause(); } catch (e) { } cloudAudio = null; }
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      setNarrateLabel('idle');
+    }
+    async function toggleNarration() {
+      if (ttsState !== 'idle') { stopNarration(); return; }
+      const text = narrationText();
+      if (!text) return;
+      liveStop = false;
+      setNarrateLabel('loading');
+      // Create the AudioContext now (inside the click gesture) so playback is allowed.
+      try { liveCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { liveCtx = null; }
+      try {
+        await narrateLive(text);
+      } catch (err) {
+        if (liveStop) return;
+        try { await narrateCloud(text); }
+        catch (e2) { narrateBrowserFallback(text); }
+      }
+    }
+    async function narrateLive(text) {
+      const tr = await fetch('/api/live-token');
+      const tj = await tr.json();
+      if (!tj.token) throw new Error(tj.error || 'no token');
+      const { GoogleGenAI, Modality } = await import('https://esm.sh/@google/genai@2');
+      if (liveStop) throw new Error('stopped');
+      const ai = new GoogleGenAI({ apiKey: tj.token, httpOptions: { apiVersion: 'v1alpha' } });
+      const isEn = window.__lang === 'en';
+      const sys = isEn
+        ? 'You are a professional narrator. Read the following text aloud, verbatim, in English, clearly and at a natural professional pace. Do not add, omit, translate, summarize or comment — read it exactly as given.'
+        : 'אתה קריין מקצועי. הקרא בקול את הטקסט הבא, מילה במילה, בעברית, בנימה ברורה, טבעית ומקצועית. אל תשנה, אל תוסיף, אל תתרגם, אל תקצר ואל תגיב — רק הקרא את הטקסט בדיוק כפי שהוא.';
+      if (liveCtx && liveCtx.state === 'suspended') { try { await liveCtx.resume(); } catch (e) { } }
+      await new Promise((resolve, reject) => {
+        let settled = false, gotAudio = false;
+        const done = (ok, err) => { if (!settled) { settled = true; ok ? resolve() : reject(err || new Error('live failed')); } };
+        const scheduleStop = () => {
+          const remain = Math.max(0, liveNextTime - (liveCtx ? liveCtx.currentTime : 0));
+          setTimeout(() => { if (!liveStop) stopNarration(); }, remain * 1000 + 300);
+        };
+        ai.live.connect({
+          model: 'gemini-2.5-flash-native-audio-preview-12-2025',
+          config: {
+            responseModalities: [Modality.AUDIO],
+            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Charon' } } },
+            systemInstruction: sys
+          },
+          callbacks: {
+            onmessage: (m) => {
+              if (liveStop) return;
+              const parts = (m && m.serverContent && m.serverContent.modelTurn && m.serverContent.modelTurn.parts) || [];
+              for (const p of parts) {
+                const d = p && p.inlineData && p.inlineData.data;
+                if (d) { gotAudio = true; setNarrateLabel('playing'); playPcmChunk(d); }
+              }
+              if (m && m.serverContent && m.serverContent.turnComplete) { scheduleStop(); done(true); }
+            },
+            onerror: () => done(gotAudio),
+            onclose: () => { if (gotAudio) scheduleStop(); done(gotAudio); }
+          }
+        }).then(s => {
+          liveSession = s;
+          if (liveStop) { try { s.close(); } catch (e) { } return done(true); }
+          s.sendClientContent({ turns: [{ role: 'user', parts: [{ text }] }], turnComplete: true });
+        }).catch(e => done(false, e));
+      });
+    }
+    function playPcmChunk(b64) {
+      if (!liveCtx) return;
+      const bin = atob(b64); let len = bin.length; if (len % 2) len -= 1;
+      const buf = new ArrayBuffer(len); const bytes = new Uint8Array(buf);
+      for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
+      const int16 = new Int16Array(buf);
+      const f32 = new Float32Array(int16.length);
+      for (let i = 0; i < int16.length; i++) f32[i] = int16[i] / 32768;
+      const audioBuf = liveCtx.createBuffer(1, f32.length, 24000);
+      audioBuf.getChannelData(0).set(f32);
+      const src = liveCtx.createBufferSource();
+      src.buffer = audioBuf; src.connect(liveCtx.destination);
+      const now = liveCtx.currentTime;
+      if (liveNextTime < now) liveNextTime = now + 0.04;
+      src.start(liveNextTime);
+      liveNextTime += audioBuf.duration;
+      liveSources.push(src);
+    }
+    // Fallback 1: Cloud TTS (chunked MP3 from /api/tts).
     function chunkText(text, maxLen) {
       const parts = text.split(/(?<=[.!?:•\n])\s+/);
       const chunks = []; let cur = '';
@@ -1912,11 +2011,6 @@
       if (cur.trim()) chunks.push(cur.trim());
       return chunks;
     }
-    function b64ToBlob(b64, mime) {
-      const bin = atob(b64), arr = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-      return new Blob([arr], { type: mime || 'audio/mpeg' });
-    }
     async function ttsChunk(text) {
       const r = await fetch('/api/tts', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1924,53 +2018,38 @@
       });
       if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || ('HTTP ' + r.status)); }
       const j = await r.json();
-      return b64ToBlob(j.audio, j.mime);
+      const bin = atob(j.audio), arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      return new Blob([arr], { type: j.mime || 'audio/mpeg' });
     }
     function playBlob(blob) {
       return new Promise((resolve) => {
         const url = URL.createObjectURL(blob);
-        ttsAudio = new Audio(url);
-        ttsAudio.onended = () => { URL.revokeObjectURL(url); resolve(); };
-        ttsAudio.onerror = () => { URL.revokeObjectURL(url); resolve(); };
-        ttsAudio.play().catch(() => resolve());
+        cloudAudio = new Audio(url);
+        cloudAudio.onended = () => { URL.revokeObjectURL(url); resolve(); };
+        cloudAudio.onerror = () => { URL.revokeObjectURL(url); resolve(); };
+        cloudAudio.play().catch(() => resolve());
       });
     }
-    function stopNarration() {
-      ttsStop = true;
-      if (ttsAudio) { try { ttsAudio.pause(); } catch (e) { } ttsAudio = null; }
-      if (window.speechSynthesis) window.speechSynthesis.cancel();
-      setNarrateLabel('idle');
-    }
-    async function toggleNarration() {
-      if (ttsState !== 'idle') { stopNarration(); return; }
-      const text = (document.getElementById('doc').innerText || '').replace(/\s+/g, ' ').trim();
-      if (!text) return;
-      ttsStop = false;
-      setNarrateLabel('loading');
+    async function narrateCloud(text) {
       const chunks = chunkText(text, 1400);
-      try {
-        let nextP = ttsChunk(chunks[0]);
-        for (let i = 0; i < chunks.length && !ttsStop; i++) {
-          let blob;
-          try { blob = await nextP; }
-          catch (err) { if (i === 0) { narrateBrowserFallback(text); return; } throw err; }
-          if (ttsStop) break;
-          nextP = (i + 1 < chunks.length) ? ttsChunk(chunks[i + 1]) : null;
-          setNarrateLabel('playing');
-          await playBlob(blob);
-        }
-      } catch (err) { alert('שגיאה בהקראה: ' + err.message); }
-      if (!ttsStop) setNarrateLabel('idle');
+      let nextP = ttsChunk(chunks[0]);
+      for (let i = 0; i < chunks.length && !liveStop; i++) {
+        const blob = await nextP; // may throw → caller falls back to the browser voice
+        if (liveStop) break;
+        nextP = (i + 1 < chunks.length) ? ttsChunk(chunks[i + 1]) : null;
+        setNarrateLabel('playing');
+        await playBlob(blob);
+      }
+      if (!liveStop) setNarrateLabel('idle');
     }
-    // Fallback to the browser voice when /api/tts isn't reachable (opening the
-    // file locally, or before the Gemini key is configured).
+    // Fallback 2: the browser voice (local file, or everything else failed).
     function narrateBrowserFallback(text) {
       const synth = window.speechSynthesis;
-      if (!synth) { setNarrateLabel('idle'); alert('ההקראה האיכותית זמינה רק באתר החי (www.eitan.work).'); return; }
+      if (!synth) { setNarrateLabel('idle'); return; }
       const isEn = window.__lang === 'en';
       const u = new SpeechSynthesisUtterance(text);
       u.lang = isEn ? 'en-US' : 'he-IL';
-      u.rate = isEn ? 1 : 0.98;
       const match = synth.getVoices().find(v => (v.lang || '').toLowerCase().startsWith(isEn ? 'en' : 'he'));
       if (match) u.voice = match;
       u.onend = () => setNarrateLabel('idle');
