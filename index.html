@@ -1937,23 +1937,38 @@
       }
     }
     async function narrateLive(text) {
-      const tr = await fetch('/api/live-token');
-      const tj = await tr.json();
-      if (!tj.token) throw new Error(tj.error || 'no token');
+      // Build the optimized narration script and mint the token in parallel.
+      const isEn = window.__lang === 'en';
+      const [scriptR, tokenR] = await Promise.all([
+        fetch('/api/narration-script', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, lang: window.__lang })
+        }).then(r => r.json()).catch(() => ({})),
+        fetch('/api/live-token').then(r => r.json()).catch(() => ({}))
+      ]);
+      if (liveStop) throw new Error('stopped');
+      if (!tokenR.token) throw new Error(tokenR.error || 'no token');
+      // Use the AI script (paragraphs); fall back to the raw résumé text.
+      const paragraphs = (scriptR.paragraphs && scriptR.paragraphs.length) ? scriptR.paragraphs : [text];
       const { GoogleGenAI, Modality } = await import('https://esm.sh/@google/genai@2');
       if (liveStop) throw new Error('stopped');
-      const ai = new GoogleGenAI({ apiKey: tj.token, httpOptions: { apiVersion: 'v1alpha' } });
-      const isEn = window.__lang === 'en';
+      const ai = new GoogleGenAI({ apiKey: tokenR.token, httpOptions: { apiVersion: 'v1alpha' } });
       const sys = isEn
-        ? 'You are a professional narrator. Read the following text aloud, verbatim, in English, clearly and at a natural professional pace. Do not add, omit, translate, summarize or comment — read it exactly as given.'
-        : 'אתה קריין מקצועי. הקרא בקול את הטקסט הבא, מילה במילה, בעברית, בנימה ברורה, טבעית ומקצועית. אל תשנה, אל תוסיף, אל תתרגם, אל תקצר ואל תגיב — רק הקרא את הטקסט בדיוק כפי שהוא.';
+        ? 'You are a warm, polished professional voice-over narrator. Read the given text aloud in English, naturally, clearly and pleasantly. Do not add, omit, translate or comment — just narrate it beautifully.'
+        : 'אתה קריין מקצועי, חם ומלוטש. הקרא בקול את הטקסט בעברית בצורה טבעית, ברורה ונעימה, כמו קריינות מקצועית. אל תוסיף, אל תשמיט, אל תתרגם ואל תגיב — רק הקרא אותו יפה.';
       if (liveCtx && liveCtx.state === 'suspended') { try { await liveCtx.resume(); } catch (e) { } }
       await new Promise((resolve, reject) => {
-        let settled = false, gotAudio = false;
+        let settled = false, gotAudio = false, idx = 0;
         const done = (ok, err) => { if (!settled) { settled = true; ok ? resolve() : reject(err || new Error('live failed')); } };
         const scheduleStop = () => {
           const remain = Math.max(0, liveNextTime - (liveCtx ? liveCtx.currentTime : 0));
-          setTimeout(() => { if (!liveStop) stopNarration(); }, remain * 1000 + 300);
+          setTimeout(() => { if (!liveStop) stopNarration(); }, remain * 1000 + 400);
+        };
+        // Send one paragraph; the next is sent the moment this one finishes
+        // generating (while its audio is still playing) — a smooth pipeline.
+        const sendNext = () => {
+          if (!liveSession || liveStop) return;
+          liveSession.sendClientContent({ turns: [{ role: 'user', parts: [{ text: paragraphs[idx] }] }], turnComplete: true });
         };
         ai.live.connect({
           model: 'gemini-2.5-flash-native-audio-preview-12-2025',
@@ -1970,7 +1985,11 @@
                 const d = p && p.inlineData && p.inlineData.data;
                 if (d) { gotAudio = true; setNarrateLabel('playing'); playPcmChunk(d); }
               }
-              if (m && m.serverContent && m.serverContent.turnComplete) { scheduleStop(); done(true); }
+              if (m && m.serverContent && m.serverContent.turnComplete) {
+                idx++;
+                if (idx < paragraphs.length) { sendNext(); }
+                else { scheduleStop(); done(true); }
+              }
             },
             onerror: () => done(gotAudio),
             onclose: () => { if (gotAudio) scheduleStop(); done(gotAudio); }
@@ -1978,7 +1997,7 @@
         }).then(s => {
           liveSession = s;
           if (liveStop) { try { s.close(); } catch (e) { } return done(true); }
-          s.sendClientContent({ turns: [{ role: 'user', parts: [{ text }] }], turnComplete: true });
+          sendNext();
         }).catch(e => done(false, e));
       });
     }
