@@ -43,12 +43,13 @@ module.exports = async (req, res) => {
     if (typeof body === "string") {
       try { body = JSON.parse(body); } catch { body = {}; }
     }
-    let { text, lang } = body;
+    let { text, lang, instruction } = body;
     if (!text || typeof text !== "string") {
       res.status(400).json({ error: "text is required." });
       return;
     }
     text = text.slice(0, 8000);
+    instruction = (typeof instruction === "string" ? instruction : "").slice(0, 1000).trim();
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -60,9 +61,13 @@ module.exports = async (req, res) => {
     const ai = new GoogleGenAI({ apiKey });
     const langName = lang === "en" ? "English" : "Hebrew";
 
+    const extra = instruction
+      ? `\n\nADDITIONAL INSTRUCTIONS FROM THE USER (follow these closely, as long as they don't conflict with excluding contact details / inventing facts):\n"""\n${instruction}\n"""`
+      : "";
+
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: `Language of the narration: ${langName}.\n\nRésumé text:\n"""\n${text}\n"""`,
+      contents: `Language of the narration: ${langName}.${extra}\n\nRésumé text:\n"""\n${text}\n"""`,
       config: {
         systemInstruction: SYSTEM,
         temperature: 0.6,

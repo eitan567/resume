@@ -15,12 +15,9 @@ module.exports = async (req, res) => {
     const jsonResponse = await handleUpload({
       body,
       request: req,
-      onBeforeGenerateToken: async (pathname, clientPayload) => {
-        let payload = {};
-        try { payload = clientPayload ? JSON.parse(clientPayload) : {}; } catch { payload = {}; }
-        if (!process.env.ADMIN_PASSWORD || payload.password !== process.env.ADMIN_PASSWORD) {
-          throw new Error("Unauthorized");
-        }
+      onBeforeGenerateToken: async () => {
+        // NOTE: auth temporarily removed — a proper user login is planned to gate
+        // settings/recording. Until then uploads are open (limited by type/size).
         return {
           allowedContentTypes: ["audio/wav", "audio/mpeg", "audio/mp3"],
           addRandomSuffix: true,

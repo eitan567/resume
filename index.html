@@ -1384,9 +1384,81 @@
       direction: ltr;
     }
 
-    /* Narration settings modal */
+    /* Settings modal */
     .modal-settings {
-      width: min(600px, 100%);
+      width: min(860px, 100%);
+    }
+
+    .modal-body.set-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      padding: 0;
+    }
+
+    .set-col {
+      padding: 18px 20px;
+      min-width: 0;
+    }
+
+    .set-col-divider {
+      border-inline-start: 1px solid #eee6d8;
+    }
+
+    .set-col-title {
+      margin: 0 0 15px;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--navy);
+    }
+
+    @media (max-width: 720px) {
+      .modal-body.set-cols {
+        grid-template-columns: 1fr;
+      }
+
+      .set-col-divider {
+        border-inline-start: none;
+        border-top: 1px solid #eee6d8;
+      }
+    }
+
+    .set-seg {
+      display: inline-flex;
+      border: 1px solid #ddd6ca;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .set-seg button {
+      border: none;
+      background: #fff;
+      padding: 7px 18px;
+      font-family: inherit;
+      font-size: 13px;
+      color: #353a42;
+      cursor: pointer;
+      transition: background .12s, color .12s;
+    }
+
+    .set-seg button + button {
+      border-inline-start: 1px solid #ddd6ca;
+    }
+
+    .set-seg button.active {
+      background: var(--navy);
+      color: #fff;
+    }
+
+    .set-range {
+      width: 100%;
+      accent-color: var(--navy);
+    }
+
+    .set-btn-sm {
+      flex: 0 0 auto !important;
+      min-width: 0 !important;
+      padding: 9px 18px;
     }
 
     .set-tag {
@@ -2128,46 +2200,66 @@
     </div>
   </div>
 
-  <!-- ===================== Narration settings modal ===================== -->
+  <!-- ===================== Settings modal ===================== -->
   <div class="modal-overlay" id="settingsModal" onclick="if(event.target===this)closeModal('settings')">
     <div class="modal modal-settings" role="dialog" aria-modal="true">
       <div class="modal-head">
-        <span class="modal-title">הגדרות הקראה <span id="setLangTag" class="set-tag">עברית</span></span>
+        <span class="modal-title">הגדרות</span>
         <button class="modal-close" onclick="closeModal('settings')" aria-label="סגור">&#10005;</button>
       </div>
-      <div class="modal-body">
-        <div class="set-section">
-          <label class="set-label" for="adminPass">סיסמת מנהל <span class="set-muted">(נדרשת לשמירה והקלטה)</span></label>
-          <input type="password" id="adminPass" class="set-input" placeholder="סיסמה" autocomplete="off">
+      <div class="modal-body set-cols">
+
+        <!-- Right column: narration settings -->
+        <div class="set-col">
+          <h3 class="set-col-title">הגדרות הקראה <span id="setLangTag" class="set-tag">עברית</span></h3>
+
+          <div class="set-section">
+            <label class="set-label" for="scriptPrompt">הנחיה ל‑AI <span class="set-muted">(אופציונלי)</span></label>
+            <textarea id="scriptPrompt" class="set-textarea" rows="2"
+              placeholder="איך לכתוב את התסריט? לדוגמה: בגוף ראשון, טון נלהב, להדגיש את הניסיון הבנקאי…"></textarea>
+          </div>
+
+          <div class="set-section">
+            <div class="set-row">
+              <label class="set-label">תסריט ההקראה</label>
+              <button class="set-btn-ghost" id="btnGenScript" onclick="generateScript()">✨ צור / רענן</button>
+            </div>
+            <textarea id="scriptArea" class="set-textarea" rows="7"
+              placeholder="לחץ 'צור / רענן' כדי שה‑AI ייצר תסריט קריינות, או ערוך ידנית. פסקאות מופרדות בשורה ריקה."></textarea>
+            <button class="form-submit" id="btnSaveScript" onclick="saveScript()">שמירת התסריט</button>
+          </div>
+
+          <div class="set-section">
+            <label class="set-label">הקלטה <span class="set-muted">(נשמרת בשרת לכל המבקרים)</span></label>
+            <p class="set-status" id="recStatus">טוען…</p>
+            <div class="set-rec-row">
+              <button class="form-submit set-btn-sm" id="btnRecord" onclick="recordNarration()">🎙️ הקלט</button>
+              <button class="set-btn-ghost" id="btnPreview" onclick="previewSavedAudio()">▶︎ השמע</button>
+            </div>
+            <p class="set-hint" id="recHint"></p>
+          </div>
         </div>
 
-        <div class="set-section">
-          <div class="set-row">
-            <label class="set-label">תסריט ההקראה</label>
-            <button class="set-btn-ghost" id="btnGenScript" onclick="generateScript()">✨ צור / רענן תסריט (AI)</button>
+        <!-- Left column: general settings -->
+        <div class="set-col set-col-divider">
+          <h3 class="set-col-title">הגדרות כלליות</h3>
+
+          <div class="set-section">
+            <label class="set-label">שפת ברירת מחדל</label>
+            <div class="set-seg" id="setDefaultLangSeg">
+              <button type="button" data-v="he" onclick="setDefaultLang('he')">עברית</button>
+              <button type="button" data-v="en" onclick="setDefaultLang('en')">English</button>
+            </div>
+            <p class="set-hint">השפה שבה המסמך ייפתח למבקרים.</p>
           </div>
-          <textarea id="scriptArea" class="set-textarea" rows="9"
-            placeholder="לחץ 'צור תסריט' כדי שה‑AI ייצר תסריט קריינות מקורות החיים, או ערוך ידנית. פסקאות מופרדות בשורה ריקה."></textarea>
-          <button class="form-submit" id="btnSaveScript" onclick="saveScript()">שמירת התסריט</button>
+
+          <div class="set-section">
+            <label class="set-label">מהירות הקראה ברירת מחדל <span class="set-muted" id="setDefaultSpeedVal">1.0×</span></label>
+            <input type="range" id="setDefaultSpeed" class="set-range" min="0.5" max="2" step="0.1" value="1"
+              oninput="setDefaultSpeed(this.value)">
+          </div>
         </div>
 
-        <div class="set-section">
-          <label class="set-label">הקלטת הקראה <span class="set-muted">(נשמרת בשרת — כל המבקרים שומעים אותה מיד)</span></label>
-          <p class="set-status" id="recStatus">טוען…</p>
-          <div class="set-rec-row">
-            <button class="form-submit" id="btnRecord" onclick="recordNarration()">🎙️ הקלט הקראה מלאה</button>
-            <button class="set-btn-ghost" id="btnPreview" onclick="previewSavedAudio()">▶︎ השמע הקלטה</button>
-          </div>
-          <p class="set-hint" id="recHint"></p>
-        </div>
-
-        <div class="set-section">
-          <div class="set-row">
-            <label class="set-label">סטטיסטיקות שימוש <span class="set-muted">(דורש סיסמה)</span></label>
-            <button class="set-btn-ghost" id="btnStats" onclick="loadStats()">↻ טען נתונים</button>
-          </div>
-          <div id="statsBox" class="set-stats"></div>
-        </div>
       </div>
     </div>
   </div>
@@ -2433,6 +2525,7 @@
     }
 
     async function loadNarrationSettings() {
+      reflectGeneralSettings();
       setLangCode = (window.__lang === 'en') ? 'en' : 'he';
       const tag = document.getElementById('setLangTag');
       if (tag) tag.textContent = setLangCode === 'en' ? 'English' : 'עברית';
@@ -2461,14 +2554,15 @@
     async function generateScript() {
       const text = narrationText();
       if (!text) return;
+      const instruction = document.getElementById('scriptPrompt').value.trim();
       const btn = document.getElementById('btnGenScript');
       const orig = btn.textContent;
-      btn.disabled = true; btn.textContent = '✨ יוצר תסריט…';
+      btn.disabled = true; btn.textContent = '✨ יוצר…';
       setStatus('recHint', '');
       try {
         const r = await fetch('/api/narration-script', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, lang: setLangCode })
+          body: JSON.stringify({ text, lang: setLangCode, instruction })
         });
         const j = await r.json();
         if (j.paragraphs && j.paragraphs.length) {
@@ -2484,8 +2578,6 @@
     }
 
     async function saveScript() {
-      const password = document.getElementById('adminPass').value.trim();
-      if (!password) { setStatus('recHint', 'נא להזין סיסמת מנהל לשמירה.', 'err'); return; }
       const paragraphs = scriptParagraphs();
       if (!paragraphs.length) { setStatus('recHint', 'אין תסריט לשמירה.', 'err'); return; }
       const btn = document.getElementById('btnSaveScript');
@@ -2494,7 +2586,7 @@
       try {
         const r = await fetch('/api/narration-save', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password, lang: setLangCode, script: paragraphs, audioUrl: (savedManifest && savedManifest.audioUrl) || null })
+          body: JSON.stringify({ lang: setLangCode, script: paragraphs, audioUrl: (savedManifest && savedManifest.audioUrl) || null })
         });
         const j = await r.json();
         if (r.ok && j.ok) {
@@ -2513,19 +2605,33 @@
       btn.disabled = false; btn.textContent = orig;
     }
 
+    // Merge the script paragraphs into the FEWEST possible chunks (each chunk is
+    // one Live turn). The recording is pre-made, so fewer/larger chunks mean fewer
+    // audible seams. We cap each chunk to stay under the model's per-turn limit.
+    const REC_CHUNK_MAX = 900;
+    function mergeChunks(paragraphs, maxChars) {
+      const out = []; let cur = '';
+      for (const p of paragraphs) {
+        const joined = cur ? cur + '\n' + p : p;
+        if (cur && joined.length > maxChars) { out.push(cur); cur = p; }
+        else cur = joined;
+      }
+      if (cur) out.push(cur);
+      return out;
+    }
+
     async function recordNarration() {
-      const password = document.getElementById('adminPass').value.trim();
-      if (!password) { setStatus('recHint', 'נא להזין סיסמת מנהל להקלטה.', 'err'); return; }
       const paragraphs = scriptParagraphs();
       if (!paragraphs.length) { setStatus('recHint', 'אין תסריט להקליט — צור/הזן תסריט תחילה.', 'err'); return; }
+      const chunks = mergeChunks(paragraphs, REC_CHUNK_MAX);
       const btn = document.getElementById('btnRecord');
       const orig = btn.textContent;
       recStopFlag = false;
       btn.disabled = true; btn.textContent = '⏺️ מקליט…';
       try {
         setStatus('recHint', 'מתחבר למנוע הקול…');
-        const pcm = await captureLivePcm(paragraphs, (i, n) => {
-          setStatus('recHint', 'מקליט פסקה ' + i + ' מתוך ' + n + '…');
+        const pcm = await captureLivePcm(chunks, (i, n) => {
+          setStatus('recHint', 'מקליט חלק ' + i + ' מתוך ' + n + '…');
         });
         if (!pcm || !pcm.length) throw new Error('לא התקבל אודיו מהמנוע.');
         setStatus('recHint', 'מקודד ומעלה את ההקלטה…');
@@ -2535,12 +2641,12 @@
         const blob = await upload(path, wav, {
           access: 'public',
           handleUploadUrl: '/api/blob-upload',
-          clientPayload: JSON.stringify({ password }),
+          clientPayload: JSON.stringify({}),
           contentType: 'audio/wav'
         });
         const sr = await fetch('/api/narration-save', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password, lang: setLangCode, script: paragraphs, audioUrl: blob.url })
+          body: JSON.stringify({ lang: setLangCode, script: paragraphs, audioUrl: blob.url })
         });
         const sj = await sr.json();
         if (!sr.ok || !sj.ok) throw new Error(sj.error || 'שמירת ההקלטה נכשלה.');
@@ -2642,49 +2748,43 @@
       playSavedRecording(savedManifest.audioUrl);
     }
 
-    const STAT_LABELS = {
-      page_view: 'צפיות בדף', narrate_play: 'הקראות (Live)', narrate_saved_play: 'הקראות (שמורה)',
-      chat_open: 'פתיחות צ׳אט', chat_message: 'הודעות צ׳אט', contact_open: 'פתיחות טופס',
-      contact_submit: 'שליחות טופס', export: 'ייצוא'
-    };
-    function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
-    async function loadStats() {
-      const password = document.getElementById('adminPass').value.trim();
-      const box = document.getElementById('statsBox');
-      if (!password) { box.innerHTML = '<p class="set-hint err">נא להזין סיסמת מנהל לטעינת הנתונים.</p>'; return; }
-      const btn = document.getElementById('btnStats'); const orig = btn.textContent;
-      btn.disabled = true; btn.textContent = '↻ טוען…';
-      try {
-        const r = await fetch('/api/stats', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password })
-        });
-        const j = await r.json();
-        if (!r.ok || !j.ok) { box.innerHTML = '<p class="set-hint err">' + esc(j.error || 'שגיאה') + '</p>'; }
-        else {
-          const ev = j.events || {};
-          const cards = Object.keys(STAT_LABELS)
-            .filter(k => ev[k])
-            .map(k => '<div class="stat-card"><b>' + ev[k] + '</b><span>' + STAT_LABELS[k] + '</span></div>')
-            .join('');
-          let html = '<div class="stat-grid">' + (cards || '<div class="stat-card"><b>0</b><span>אין נתונים עדיין</span></div>') + '</div>';
-          html += '<div class="stat-meta">סה״כ ' + j.chatCount + ' שיחות צ׳אט · ' + j.contactCount + ' פניות שמורות</div>';
-          if (j.recentChats && j.recentChats.length) {
-            html += '<h4>שאלות צ׳אט אחרונות</h4><ul>' +
-              j.recentChats.map(c => '<li>' + esc(c.question) + '</li>').join('') + '</ul>';
-          }
-          if (j.recentContacts && j.recentContacts.length) {
-            html += '<h4>פניות אחרונות</h4><ul>' +
-              j.recentContacts.map(c => '<li>' + esc(c.name || '—') + (c.email ? ' · ' + esc(c.email) : '') +
-                (c.message ? ' — ' + esc(c.message.slice(0, 80)) : '') + '</li>').join('') + '</ul>';
-          }
-          box.innerHTML = html;
-        }
-      } catch (e) {
-        box.innerHTML = '<p class="set-hint err">שגיאת רשת בטעינת הנתונים.</p>';
-      }
-      btn.disabled = false; btn.textContent = orig;
+    // ---- General settings: default document language + default narration speed.
+    //      Persisted per-browser in localStorage and applied on page load. ----
+    function reflectGeneralSettings() {
+      const lang = localStorage.getItem('defaultLang') || 'he';
+      document.querySelectorAll('#setDefaultLangSeg button').forEach(b =>
+        b.classList.toggle('active', b.dataset.v === lang));
+      const sp = parseFloat(localStorage.getItem('defaultSpeed') || '1') || 1;
+      const r = document.getElementById('setDefaultSpeed');
+      if (r) r.value = sp;
+      const lbl = document.getElementById('setDefaultSpeedVal');
+      if (lbl) lbl.textContent = sp.toFixed(1) + '×';
     }
+    function setDefaultLang(v) {
+      v = (v === 'en') ? 'en' : 'he';
+      localStorage.setItem('defaultLang', v);
+      reflectGeneralSettings();
+      setLang(v);
+    }
+    function setDefaultSpeed(v) {
+      const sp = parseFloat(v) || 1;
+      localStorage.setItem('defaultSpeed', String(sp));
+      const lbl = document.getElementById('setDefaultSpeedVal');
+      if (lbl) lbl.textContent = sp.toFixed(1) + '×';
+      setNarrationRate(sp);                       // apply immediately
+      const rail = document.getElementById('narrateSpeed');
+      if (rail) rail.value = sp;                   // keep the rail slider in sync
+    }
+    // Apply saved defaults at startup.
+    window.addEventListener('DOMContentLoaded', () => {
+      if (localStorage.getItem('defaultLang') === 'en') setLang('en');
+      const sp = parseFloat(localStorage.getItem('defaultSpeed') || '1') || 1;
+      if (sp !== 1) {
+        setNarrationRate(sp);
+        const rail = document.getElementById('narrateSpeed');
+        if (rail) rail.value = sp;
+      }
+    });
 
     // ---- Contact form (Web3Forms) & AI chat modals ----
     const WEB3FORMS_KEY = 'dd90524f-20d2-4980-979e-7010104a02d0';

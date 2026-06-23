@@ -11,13 +11,10 @@ module.exports = async (req, res) => {
   try {
     let body = req.body || {};
     if (typeof body === "string") { try { body = JSON.parse(body); } catch { body = {}; } }
-    const { password, lang, script, audioUrl } = body;
+    const { lang, script, audioUrl } = body;
 
-    if (!process.env.ADMIN_PASSWORD || password !== process.env.ADMIN_PASSWORD) {
-      res.status(401).json({ error: "סיסמת מנהל שגויה." });
-      return;
-    }
-
+    // NOTE: auth temporarily removed — a proper user login is planned to gate
+    // settings/recording. Until then these admin actions are open.
     const code = lang === "en" ? "en" : "he";
     const scriptArr = Array.isArray(script)
       ? script.map((s) => String(s || "")).filter(Boolean)
