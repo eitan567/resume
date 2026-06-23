@@ -2241,6 +2241,12 @@
             </div>
             <p class="set-hint" id="recHint"></p>
           </div>
+
+          <div class="set-section">
+            <label class="set-label">מהירות הקראה ברירת מחדל <span class="set-muted" id="setDefaultSpeedVal">1.0×</span></label>
+            <input type="range" id="setDefaultSpeed" class="set-range" min="0.5" max="2" step="0.1" value="1"
+              oninput="setDefaultSpeed(this.value)">
+          </div>
         </div>
 
         <!-- Left column: general settings -->
@@ -2254,12 +2260,6 @@
               <button type="button" data-v="en" onclick="setDefaultLang('en')">English</button>
             </div>
             <p class="set-hint">השפה שבה המסמך ייפתח (נשמר בדפדפן זה).</p>
-          </div>
-
-          <div class="set-section">
-            <label class="set-label">מהירות הקראה ברירת מחדל <span class="set-muted" id="setDefaultSpeedVal">1.0×</span></label>
-            <input type="range" id="setDefaultSpeed" class="set-range" min="0.5" max="2" step="0.1" value="1"
-              oninput="setDefaultSpeed(this.value)">
           </div>
         </div>
 
