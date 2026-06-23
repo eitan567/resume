@@ -1518,6 +1518,58 @@
     .set-hint.err {
       color: #b8331f;
     }
+
+    .set-stats {
+      font-size: 13px;
+      color: #3a4150;
+    }
+
+    .set-stats .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .set-stats .stat-card {
+      background: #f4f6fb;
+      border: 1px solid #e2e8f4;
+      border-radius: 9px;
+      padding: 8px 11px;
+    }
+
+    .set-stats .stat-card b {
+      display: block;
+      font-size: 20px;
+      color: #022159;
+      line-height: 1.1;
+    }
+
+    .set-stats .stat-card span {
+      font-size: 11.5px;
+      color: #6a7488;
+    }
+
+    .set-stats h4 {
+      margin: 12px 0 5px;
+      font-size: 12.5px;
+      color: #022159;
+    }
+
+    .set-stats ul {
+      margin: 0;
+      padding-inline-start: 18px;
+    }
+
+    .set-stats li {
+      margin-bottom: 3px;
+      color: #4a5266;
+    }
+
+    .set-stats .stat-meta {
+      color: #9aa3b5;
+      font-size: 11px;
+    }
   </style>
 </head>
 
@@ -2108,6 +2160,14 @@
           </div>
           <p class="set-hint" id="recHint"></p>
         </div>
+
+        <div class="set-section">
+          <div class="set-row">
+            <label class="set-label">סטטיסטיקות שימוש <span class="set-muted">(דורש סיסמה)</span></label>
+            <button class="set-btn-ghost" id="btnStats" onclick="loadStats()">↻ טען נתונים</button>
+          </div>
+          <div id="statsBox" class="set-stats"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -2184,10 +2244,11 @@
       try {
         const saved = await fetch('/api/narration?lang=' + window.__lang).then(r => r.json());
         if (liveStop) return;
-        if (saved && saved.audioUrl) { playSavedRecording(saved.audioUrl); return; }
+        if (saved && saved.audioUrl) { track('narrate_saved_play'); playSavedRecording(saved.audioUrl); return; }
       } catch (e) { /* fall through to live generation */ }
       if (liveStop) return;
       // 2) No saved recording → generate live (Gemini Live, then Cloud TTS, then browser).
+      track('narrate_play');
       // Create the AudioContext now (inside the click gesture) so playback is allowed.
       try { liveCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { liveCtx = null; }
       try {
@@ -2581,17 +2642,74 @@
       playSavedRecording(savedManifest.audioUrl);
     }
 
+    const STAT_LABELS = {
+      page_view: 'צפיות בדף', narrate_play: 'הקראות (Live)', narrate_saved_play: 'הקראות (שמורה)',
+      chat_open: 'פתיחות צ׳אט', chat_message: 'הודעות צ׳אט', contact_open: 'פתיחות טופס',
+      contact_submit: 'שליחות טופס', export: 'ייצוא'
+    };
+    function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+    async function loadStats() {
+      const password = document.getElementById('adminPass').value.trim();
+      const box = document.getElementById('statsBox');
+      if (!password) { box.innerHTML = '<p class="set-hint err">נא להזין סיסמת מנהל לטעינת הנתונים.</p>'; return; }
+      const btn = document.getElementById('btnStats'); const orig = btn.textContent;
+      btn.disabled = true; btn.textContent = '↻ טוען…';
+      try {
+        const r = await fetch('/api/stats', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        const j = await r.json();
+        if (!r.ok || !j.ok) { box.innerHTML = '<p class="set-hint err">' + esc(j.error || 'שגיאה') + '</p>'; }
+        else {
+          const ev = j.events || {};
+          const cards = Object.keys(STAT_LABELS)
+            .filter(k => ev[k])
+            .map(k => '<div class="stat-card"><b>' + ev[k] + '</b><span>' + STAT_LABELS[k] + '</span></div>')
+            .join('');
+          let html = '<div class="stat-grid">' + (cards || '<div class="stat-card"><b>0</b><span>אין נתונים עדיין</span></div>') + '</div>';
+          html += '<div class="stat-meta">סה״כ ' + j.chatCount + ' שיחות צ׳אט · ' + j.contactCount + ' פניות שמורות</div>';
+          if (j.recentChats && j.recentChats.length) {
+            html += '<h4>שאלות צ׳אט אחרונות</h4><ul>' +
+              j.recentChats.map(c => '<li>' + esc(c.question) + '</li>').join('') + '</ul>';
+          }
+          if (j.recentContacts && j.recentContacts.length) {
+            html += '<h4>פניות אחרונות</h4><ul>' +
+              j.recentContacts.map(c => '<li>' + esc(c.name || '—') + (c.email ? ' · ' + esc(c.email) : '') +
+                (c.message ? ' — ' + esc(c.message.slice(0, 80)) : '') + '</li>').join('') + '</ul>';
+          }
+          box.innerHTML = html;
+        }
+      } catch (e) {
+        box.innerHTML = '<p class="set-hint err">שגיאת רשת בטעינת הנתונים.</p>';
+      }
+      btn.disabled = false; btn.textContent = orig;
+    }
+
     // ---- Contact form (Web3Forms) & AI chat modals ----
     const WEB3FORMS_KEY = 'dd90524f-20d2-4980-979e-7010104a02d0';
+    // Lightweight usage tracking (fire-and-forget; never blocks the UI).
+    function track(event) {
+      try {
+        fetch('/api/track', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ event, lang: window.__lang }), keepalive: true
+        }).catch(() => { });
+      } catch (e) { }
+    }
+    window.addEventListener('DOMContentLoaded', () => track('page_view'));
+
     const MODAL_IDS = { chat: 'chatModal', contact: 'contactModal', settings: 'settingsModal' };
     function openModal(which) {
       document.getElementById(MODAL_IDS[which] || 'contactModal').classList.add('open');
       if (which === 'chat') {
+        track('chat_open');
         if (!document.getElementById('chatMessages').dataset.greeted) greetChat();
         setTimeout(() => document.getElementById('chatInput').focus(), 60);
       } else if (which === 'settings') {
         loadNarrationSettings();
       } else {
+        track('contact_open');
         setTimeout(() => document.querySelector('#contactForm input[name=name]').focus(), 60);
       }
       document.addEventListener('keydown', modalEsc);
@@ -2610,6 +2728,11 @@
         return;
       }
       const data = Object.fromEntries(new FormData(form));
+      // Keep a queryable record in our own DB (best-effort, parallel to email).
+      fetch('/api/contact', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: data.name, email: data.email, phone: data.phone, message: data.message })
+      }).catch(() => { });
       data.access_key = WEB3FORMS_KEY;
       data.subject = 'פנייה מאתר קורות החיים — ' + (data.name || '');
       data.from_name = 'אתר קורות החיים של איתן';
@@ -2653,7 +2776,7 @@
         const r = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: msg, history: chatHistory.slice(-10) })
+          body: JSON.stringify({ message: msg, history: chatHistory.slice(-10), lang: window.__lang })
         });
         const j = await r.json();
         typing.remove();

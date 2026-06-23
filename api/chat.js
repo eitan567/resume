@@ -2,6 +2,8 @@
 // Eitan Baron, powered by Google Gemini. The GEMINI_API_KEY is read from the
 // server-side environment (never exposed to the browser).
 
+const { getDb, safe } = require("./_db");
+
 const SYSTEM_INSTRUCTION = `
 אתה העוזר הווירטואלי (AI Recruiter Assistant) של איתן ברון (Eitan Baron), מפתח תוכנה וקוד בכיר עם כ-18 שנות ניסיון, מתוכן כ-11 שנים בבנק דיסקונט.
 תפקידך לסייע למגייסים, למראיינים ולמנהלים טכנולוגיים להכיר את איתן, את ניסיונו, הכלים הטכנולוגיים שבהם הוא מומחה והישגיו המקצועיים.
@@ -72,7 +74,7 @@ module.exports = async (req, res) => {
     if (typeof body === "string") {
       try { body = JSON.parse(body); } catch { body = {}; }
     }
-    let { message, history = [] } = body;
+    let { message, history = [], lang } = body;
     if (!message || typeof message !== "string") {
       res.status(400).json({ error: "Message is required and must be a string." });
       return;
@@ -106,9 +108,28 @@ module.exports = async (req, res) => {
       config: { systemInstruction: SYSTEM_INSTRUCTION, temperature: 0.7 },
     });
 
-    res.status(200).json({
-      response: response.text || "סליחה, חלה שגיאה בעיבוד התשובה. אנא נסה שוב.",
+    const answer = response.text || "סליחה, חלה שגיאה בעיבוד התשובה. אנא נסה שוב.";
+
+    // Log the exchange (best-effort — never blocks or breaks the reply).
+    await safe(async () => {
+      const db = await getDb();
+      const now = new Date().toISOString();
+      await db.batch(
+        [
+          {
+            sql: "INSERT INTO chat_logs (ip, lang, question, answer, created_at) VALUES (?, ?, ?, ?, ?)",
+            args: [ip, lang === "en" ? "en" : "he", message, answer, now],
+          },
+          {
+            sql: "INSERT INTO usage_events (event, lang, ip, created_at) VALUES (?, ?, ?, ?)",
+            args: ["chat_message", lang === "en" ? "en" : "he", ip, now],
+          },
+        ],
+        "write"
+      );
     });
+
+    res.status(200).json({ response: answer });
   } catch (error) {
     console.error("Gemini API Error:", error);
     res.status(500).json({
