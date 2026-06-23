@@ -52,6 +52,26 @@ async function ensureSchema(db) {
     ip TEXT,
     created_at TEXT NOT NULL
   )`);
+  // Narration versions. A version = a script + its recording (per-chunk audio
+  // segments + a stitched merged file). Up to 6 live versions per language; older
+  // ones move to the archive table.
+  await db.query(`CREATE TABLE IF NOT EXISTS narration_versions (
+    id SERIAL PRIMARY KEY,
+    lang TEXT NOT NULL,
+    script TEXT NOT NULL DEFAULT '[]',
+    segments TEXT NOT NULL DEFAULT '[]',
+    audio_url TEXT,
+    active BOOLEAN NOT NULL DEFAULT false,
+    created_at TEXT NOT NULL
+  )`);
+  await db.query(`CREATE TABLE IF NOT EXISTS narration_versions_archive (
+    id SERIAL PRIMARY KEY,
+    lang TEXT NOT NULL,
+    script TEXT NOT NULL DEFAULT '[]',
+    segments TEXT NOT NULL DEFAULT '[]',
+    audio_url TEXT,
+    created_at TEXT NOT NULL
+  )`);
   _schemaReady = true;
 }
 
@@ -72,6 +92,23 @@ async function getDb() {
   return _poolPromise;
 }
 
+// Merge paragraphs into the fewest chunks under maxChars (one chunk = one Live
+// turn = one audio segment). MUST match the client's mergeChunks exactly so that
+// segment boundaries (and audio reuse) line up.
+const REC_CHUNK_MAX = 900;
+function mergeChunks(paragraphs, maxChars) {
+  maxChars = maxChars || REC_CHUNK_MAX;
+  const out = [];
+  let cur = "";
+  for (const p of paragraphs) {
+    const joined = cur ? cur + "\n" + p : p;
+    if (cur && joined.length > maxChars) { out.push(cur); cur = p; }
+    else cur = joined;
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+
 // Best-effort: never let logging/analytics break the main request.
 async function safe(fn) {
   try {
@@ -82,4 +119,4 @@ async function safe(fn) {
   }
 }
 
-module.exports = { getDb, safe };
+module.exports = { getDb, safe, mergeChunks, REC_CHUNK_MAX };

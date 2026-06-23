@@ -1474,6 +1474,64 @@
       border-radius: 8px;
     }
 
+    /* Version bar (archive icon · combo · generate) */
+    .ver-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .set-select {
+      font-family: inherit;
+      font-size: 12px;
+      padding: 6px 8px;
+      border: 1px solid #ddd6ca;
+      border-radius: 8px;
+      background: #fff;
+      color: #353a42;
+      max-width: 168px;
+      cursor: pointer;
+    }
+
+    .set-icon-btn {
+      flex: 0 0 auto;
+      border: 1px solid #ddd6ca;
+      background: #fff;
+      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      font-size: 15px;
+      cursor: pointer;
+      line-height: 1;
+      transition: background .12s, border-color .12s;
+    }
+
+    .set-icon-btn:hover { background: #faf7f1; border-color: #c7bfb1; }
+
+    /* Archive list */
+    .arch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #efe9dd;
+    }
+
+    .arch-row:last-child { border-bottom: none; }
+
+    .arch-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .arch-info b { font-size: 13px; color: var(--navy); }
+    .arch-info span { font-size: 11.5px; color: #6a7488; }
+    .arch-info em { font-size: 11.5px; color: #9aa3b5; font-style: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px; }
+
     .set-section.set-grow .set-status,
     .set-section.set-grow .set-hint {
       margin: 2px 0 0;
@@ -2381,8 +2439,12 @@
           <div class="set-section set-grow">
             <div class="set-row">
               <label class="set-label">תסריט ההקראה</label>
-              <button class="set-btn-ghost" id="btnGenScript" onclick="generateScript()"
-                title="שולח את קורות החיים ל‑AI ומחליף את תוכן התיבה בתסריט חדש">✨ הפק תסריט עם AI</button>
+              <div class="ver-bar">
+                <button class="set-icon-btn" id="btnArchive" onclick="openArchive()" title="ארכיון גרסאות">🗄</button>
+                <select class="set-select" id="verCombo" onchange="onVersionPick(this.value)" title="גרסאות"></select>
+                <button class="set-btn-ghost" id="btnGenScript" onclick="generateScript()"
+                  title="שולח את קורות החיים ל‑AI ומחליף את תוכן התיבה בתסריט חדש">✨ הפק תסריט</button>
+              </div>
             </div>
             <textarea id="scriptArea" class="set-textarea"
               placeholder="לחץ 'הפק תסריט עם AI' כדי שה‑AI ייצר תסריט קריינות מקורות החיים, או כתוב/ערוך ידנית. פסקאות מופרדות בשורה ריקה."></textarea>
@@ -2416,6 +2478,20 @@
           </div>
         </div>
 
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== Archive (versions) modal ===================== -->
+  <div class="modal-overlay" id="archiveModal" onclick="if(event.target===this)closeArchive()">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <span class="modal-title">ארכיון גרסאות</span>
+        <button class="modal-close" onclick="closeArchive()" aria-label="סגור">&#10005;</button>
+      </div>
+      <div class="modal-body">
+        <p class="set-hint" style="margin:0 0 12px">בחירת גרסה מהארכיון תפעיל אותה, והגרסה הוותיקה ביותר ברשימה הפעילה תועבר לארכיון במקומה.</p>
+        <div id="archiveList"></div>
       </div>
     </div>
   </div>
@@ -2742,7 +2818,7 @@
     // narrate button never has to regenerate. The live engine remains the fallback
     // (and is used for dynamic content like chat answers / future per-user CVs).
     let setLangCode = 'he';
-    let savedManifest = null;
+    let activeVersion = null;   // { id, script:[], segments:[{text,url}], audioUrl }
     let recSession = null, recStopFlag = false;
 
     function setStatus(elId, text, cls) {
@@ -2756,6 +2832,22 @@
         .split(/\n\s*\n/).map(s => s.trim().replace(/\s+/g, ' ')).filter(Boolean);
     }
 
+    function reflectRecStatus() {
+      const pv = document.getElementById('btnPreview');
+      if (activeVersion && activeVersion.audioUrl) {
+        const when = activeVersion.updatedAt ? new Date(activeVersion.updatedAt).toLocaleString('he-IL') : '';
+        setStatus('recStatus', '✓ קיימת הקלטה שמורה' + (when ? ' (עודכן ' + when + ')' : ''), 'ok');
+        if (pv) pv.disabled = false;
+      } else if (activeVersion && activeVersion.segments && activeVersion.segments.some(s => s.url)) {
+        const have = activeVersion.segments.filter(s => s.url).length, tot = activeVersion.segments.length;
+        setStatus('recStatus', 'התסריט השתנה — נדרשת הקלטה. ' + have + ' מתוך ' + tot + ' חלקים כבר מוקלטים (יעשה שימוש חוזר).', 'err');
+        if (pv) pv.disabled = true;
+      } else {
+        setStatus('recStatus', 'אין הקלטה שמורה — לחץ "הקלט" כדי להפיק.', '');
+        if (pv) pv.disabled = true;
+      }
+    }
+
     async function loadNarrationSettings() {
       reflectGeneralSettings();
       setLangCode = (window.__lang === 'en') ? 'en' : 'he';
@@ -2767,20 +2859,59 @@
       setStatus('recStatus', 'טוען…');
       try {
         const m = await fetch('/api/narration?lang=' + setLangCode).then(r => r.json());
-        savedManifest = m || null;
+        activeVersion = (m && m.versionId)
+          ? { id: m.versionId, script: m.script || [], segments: m.segments || [], audioUrl: m.audioUrl || null, updatedAt: m.updatedAt }
+          : null;
         if (m && Array.isArray(m.script) && m.script.length) {
           document.getElementById('scriptArea').value = m.script.join('\n\n');
         }
-        if (m && m.audioUrl) {
-          const when = m.updatedAt ? new Date(m.updatedAt).toLocaleString('he-IL') : '';
-          setStatus('recStatus', '✓ קיימת הקלטה שמורה' + (when ? ' (עודכן ' + when + ')' : ''), 'ok');
-          document.getElementById('btnPreview').disabled = false;
-        } else {
-          setStatus('recStatus', 'אין הקלטה שמורה עדיין — צור תסריט והקלט הקראה.');
-        }
+        reflectRecStatus();
+        await loadVersionCombo();
       } catch (e) {
         setStatus('recStatus', 'לא ניתן לטעון הגדרות (האם האתר פרוס בשרת?).', 'err');
       }
+    }
+
+    // ---- Version combo ----
+    function verLabel(v, idx) {
+      const d = v.createdAt ? new Date(v.createdAt) : null;
+      const when = d ? d.toLocaleDateString('he-IL') + ' ' + d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : ('גרסה ' + (idx + 1));
+      const mark = v.hasAudio ? '🎙️' : '📝';
+      return mark + ' ' + when + (v.active ? ' • פעילה' : '');
+    }
+    async function loadVersionCombo() {
+      const combo = document.getElementById('verCombo');
+      if (!combo) return;
+      try {
+        const j = await fetch('/api/narration-versions', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'list', lang: setLangCode })
+        }).then(r => r.json());
+        const versions = (j && j.versions) || [];
+        combo.innerHTML = '';
+        if (!versions.length) {
+          const o = document.createElement('option'); o.textContent = 'אין גרסאות'; o.value = '';
+          combo.appendChild(o); combo.disabled = true; return;
+        }
+        combo.disabled = false;
+        versions.forEach((v, i) => {
+          const o = document.createElement('option');
+          o.value = String(v.id); o.textContent = verLabel(v, i);
+          if (v.active) o.selected = true;
+          combo.appendChild(o);
+        });
+      } catch (e) { /* leave combo as-is */ }
+    }
+    async function onVersionPick(id) {
+      if (!id) return;
+      try {
+        await fetch('/api/narration-versions', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'activate', lang: setLangCode, id: parseInt(id, 10) })
+        });
+        await loadNarrationSettings();
+        notify('הגרסה הופעלה ✓', 'ok');
+      } catch (e) { notify('שגיאה בהפעלת הגרסה.', 'err'); }
     }
 
     async function generateScript() {
@@ -2809,6 +2940,20 @@
       btn.disabled = false; btn.textContent = orig;
     }
 
+    // Persist the current textarea script. Creates a new version if the script
+    // changed (inheriting unchanged chunks' audio). Returns the active version.
+    async function persistScript() {
+      const paragraphs = scriptParagraphs();
+      if (!paragraphs.length) throw new Error('אין תסריט לשמירה.');
+      const r = await fetch('/api/narration-save', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lang: setLangCode, script: paragraphs })
+      });
+      const j = await r.json();
+      if (!r.ok || !j.ok) throw new Error(j.error || 'שמירה נכשלה.');
+      activeVersion = Object.assign({ updatedAt: new Date().toISOString() }, j.version);
+      return j;
+    }
     async function saveScript() {
       const paragraphs = scriptParagraphs();
       if (!paragraphs.length) { setStatus('recHint', 'אין תסריט לשמירה.', 'err'); return; }
@@ -2816,21 +2961,19 @@
       const orig = btn.textContent;
       btn.disabled = true; btn.textContent = 'שומר…';
       try {
-        const r = await fetch('/api/narration-save', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lang: setLangCode, script: paragraphs, audioUrl: (savedManifest && savedManifest.audioUrl) || null })
-        });
-        const j = await r.json();
-        if (r.ok && j.ok) {
-          savedManifest = j.manifest;
-          btn.disabled = false; btn.textContent = orig;
-          setStatus('recHint', 'התסריט נשמר. כשתהיה מרוצה ממנו — לחץ "הקלט" כדי להפיק את ההקראה.', 'ok');
-          notify('התסריט נשמר ✓', 'ok');
-          return;
+        const j = await persistScript();
+        reflectRecStatus();
+        await loadVersionCombo();
+        if (j.unchanged) {
+          setStatus('recHint', 'התסריט לא השתנה — לא נוצרה גרסה חדשה.', '');
+          notify('אין שינוי בתסריט', 'info');
+        } else {
+          setStatus('recHint', 'נוצרה גרסה חדשה. כשתהיה מרוצה — לחץ "הקלט" כדי להפיק את ההקראה (יוקלטו רק החלקים שהשתנו).', 'ok');
+          notify('התסריט נשמר כגרסה חדשה ✓', 'ok');
         }
-        setStatus('recHint', j.error || 'שמירה נכשלה.', 'err');
       } catch (e) {
-        setStatus('recHint', 'שגיאת רשת בשמירה.', 'err');
+        setStatus('recHint', e.message || 'שגיאת רשת בשמירה.', 'err');
+        notify(e.message || 'שגיאה בשמירה', 'err');
       }
       btn.disabled = false; btn.textContent = orig;
     }
@@ -2850,41 +2993,82 @@
       return out;
     }
 
+    // Fetch one of our own chunk WAVs (24kHz mono 16-bit, 44-byte header) as PCM.
+    async function wavUrlToInt16(url) {
+      const buf = await fetch(url).then(r => r.arrayBuffer());
+      return new Int16Array(buf, 44, Math.floor((buf.byteLength - 44) / 2));
+    }
+
     async function recordNarration() {
-      const paragraphs = scriptParagraphs();
-      if (!paragraphs.length) { setStatus('recHint', 'אין תסריט להקליט — צור/הזן תסריט תחילה.', 'err'); return; }
-      const chunks = mergeChunks(paragraphs, REC_CHUNK_MAX);
       const btn = document.getElementById('btnRecord');
       const orig = btn.textContent;
       recStopFlag = false;
       btn.disabled = true; btn.textContent = '⏺️ מקליט…';
       try {
-        setStatus('recHint', 'מתחבר למנוע הקול…');
-        const pcm = await captureLivePcm(chunks, (i, n) => {
-          setStatus('recHint', 'מקליט חלק ' + i + ' מתוך ' + n + '…');
-        });
-        if (!pcm || !pcm.length) throw new Error('לא התקבל אודיו מהמנוע.');
-        setStatus('recHint', 'מקודד ומעלה את ההקלטה…');
-        const wav = encodeWav(pcm, 24000);
+        // 1) Save the script first (creates a new version if changed, inheriting
+        //    unchanged chunks' audio).
+        setStatus('recHint', 'שומר את התסריט…');
+        await persistScript();
+        if (!activeVersion || !activeVersion.segments || !activeVersion.segments.length)
+          throw new Error('אין תסריט להקליט.');
+        const segments = activeVersion.segments.map(s => ({ text: s.text, url: s.url || null }));
+
+        // Already fully recorded and stitched → nothing to do.
+        const needsAudio = segments.some(s => !s.url) || !activeVersion.audioUrl;
+        if (!needsAudio) {
+          setStatus('recHint', 'ההקלטה כבר עדכנית — אין חלקים חדשים להקליט.', 'ok');
+          notify('ההקלטה כבר עדכנית', 'info');
+          btn.disabled = false; btn.textContent = orig; return;
+        }
+
+        // 2) Synthesize only the chunks that lack audio; reuse the rest.
+        const missingIdx = segments.map((s, i) => s.url ? -1 : i).filter(i => i >= 0);
+        let synthPcm = [];
+        if (missingIdx.length) {
+          const reuse = segments.length - missingIdx.length;
+          setStatus('recHint', reuse
+            ? ('מקליט ' + missingIdx.length + ' חלקים שהשתנו (' + reuse + ' בשימוש חוזר)…')
+            : ('מקליט ' + segments.length + ' חלקים…'));
+          synthPcm = await captureLivePcmPerChunk(missingIdx.map(i => segments[i].text), (i, n) => {
+            setStatus('recHint', 'מקליט חלק חדש ' + i + ' מתוך ' + n + '…');
+          });
+          if (synthPcm.length !== missingIdx.length) throw new Error('לא התקבל אודיו מלא מהמנוע.');
+        }
+
+        // 3) Assemble per-chunk PCM (reused fetched from Blob, new from engine),
+        //    upload the new chunk files, then stitch and upload the merged file.
+        setStatus('recHint', 'מקודד ומעלה…');
         const { upload } = await import('https://esm.sh/@vercel/blob@0.27/client');
-        const path = 'narration/' + setLangCode + '-' + Date.now() + '.wav';
-        const blob = await upload(path, wav, {
-          access: 'public',
-          handleUploadUrl: '/api/blob-upload',
-          clientPayload: JSON.stringify({}),
-          contentType: 'audio/wav'
-        });
-        const sr = await fetch('/api/narration-save', {
+        const uploadWav = async (int16, tag) => {
+          const blob = await upload('narration/' + setLangCode + '-' + tag + '-' + Date.now() + '.wav',
+            encodeWav(int16, 24000), {
+            access: 'public', handleUploadUrl: '/api/blob-upload',
+            clientPayload: JSON.stringify({}), contentType: 'audio/wav'
+          });
+          return blob.url;
+        };
+        const allPcm = [];
+        let cursor = 0;
+        for (let i = 0; i < segments.length; i++) {
+          let pcm, url;
+          if (segments[i].url) { pcm = await wavUrlToInt16(segments[i].url); url = segments[i].url; }
+          else { pcm = synthPcm[cursor++]; url = await uploadWav(pcm, 'c' + i); }
+          allPcm.push(pcm);
+          segments[i].url = url;
+        }
+        const mergedUrl = await uploadWav(concatInt16(allPcm), 'merged');
+
+        // 4) Save the recording onto the active version (no new version created).
+        const sr = await fetch('/api/narration-versions', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lang: setLangCode, script: paragraphs, audioUrl: blob.url })
+          body: JSON.stringify({ action: 'saveAudio', lang: setLangCode, id: activeVersion.id, segments, audioUrl: mergedUrl })
         });
         const sj = await sr.json();
         if (!sr.ok || !sj.ok) throw new Error(sj.error || 'שמירת ההקלטה נכשלה.');
-        savedManifest = sj.manifest;
-        const when = sj.manifest.updatedAt ? new Date(sj.manifest.updatedAt).toLocaleString('he-IL') : '';
-        setStatus('recStatus', '✓ קיימת הקלטה שמורה' + (when ? ' (עודכן ' + when + ')' : ''), 'ok');
-        document.getElementById('btnPreview').disabled = false;
-        setStatus('recHint', 'ההקלטה נשמרה ומשותפת לכל המבקרים. ✓', 'ok');
+        activeVersion = Object.assign({ updatedAt: new Date().toISOString() }, sj.version);
+        reflectRecStatus();
+        await loadVersionCombo();
+        setStatus('recHint', 'ההקלטה הופקה ונשמרה ומשותפת לכל המבקרים. ✓', 'ok');
         notify('ההקלטה הופקה ונשמרה ✓', 'ok');
       } catch (e) {
         setStatus('recHint', 'שגיאה בהקלטה: ' + (e.message || e), 'err');
@@ -2893,9 +3077,10 @@
       btn.disabled = false; btn.textContent = orig;
     }
 
-    // Connect to Gemini Live, narrate the saved paragraphs, and COLLECT the raw
-    // PCM (instead of playing it) so it can be encoded to a WAV file and uploaded.
-    async function captureLivePcm(paragraphs, onProgress) {
+    // Connect to Gemini Live and narrate each chunk in its own turn, returning an
+    // array of per-chunk PCM (Int16Array) — one entry per input chunk, in order.
+    // This lets the caller reuse unchanged chunks and only synthesize the rest.
+    async function captureLivePcmPerChunk(chunkTexts, onProgress) {
       const tokenR = await fetch('/api/live-token').then(r => r.json()).catch(() => ({}));
       if (!tokenR.token) throw new Error(tokenR.error || 'אין הרשאת קול מהשרת.');
       const { GoogleGenAI, Modality } = await import('https://esm.sh/@google/genai@2');
@@ -2904,19 +3089,20 @@
       const sys = isEn
         ? 'You are a warm, polished professional voice-over narrator. Read the given text aloud in English, naturally, clearly and pleasantly. Do not add, omit, translate or comment — just narrate it beautifully.'
         : 'אתה קריין מקצועי, חם ומלוטש. הקרא בקול את הטקסט בעברית בצורה טבעית, ברורה ונעימה, כמו קריינות מקצועית. אל תוסיף, אל תשמיט, אל תתרגם ואל תגיב — רק הקרא אותו יפה.';
-      const chunks = [];
+      const results = [];        // one Int16Array per chunk
+      let curPieces = [];        // audio pieces for the current turn
       return await new Promise((resolve, reject) => {
         let settled = false, idx = 0, gotAudio = false;
         const finish = (ok, err) => {
           if (settled) return; settled = true;
           try { if (recSession) recSession.close(); } catch (e) { }
           recSession = null;
-          ok ? resolve(concatInt16(chunks)) : reject(err || new Error('record failed'));
+          (ok && results.length === chunkTexts.length) ? resolve(results) : reject(err || new Error('record failed'));
         };
         const sendNext = () => {
           if (!recSession || recStopFlag) return;
-          if (onProgress) onProgress(idx + 1, paragraphs.length);
-          recSession.sendClientContent({ turns: [{ role: 'user', parts: [{ text: paragraphs[idx] }] }], turnComplete: true });
+          if (onProgress) onProgress(idx + 1, chunkTexts.length);
+          recSession.sendClientContent({ turns: [{ role: 'user', parts: [{ text: chunkTexts[idx] }] }], turnComplete: true });
         };
         ai.live.connect({
           model: 'gemini-2.5-flash-native-audio-preview-12-2025',
@@ -2927,24 +3113,25 @@
           },
           callbacks: {
             onmessage: (m) => {
-              if (recStopFlag) return finish(gotAudio);
+              if (recStopFlag) return finish(false, new Error('ההקלטה בוטלה.'));
               const parts = (m && m.serverContent && m.serverContent.modelTurn && m.serverContent.modelTurn.parts) || [];
               for (const p of parts) {
                 const d = p && p.inlineData && p.inlineData.data;
-                if (d) { gotAudio = true; chunks.push(b64ToInt16(d)); }
+                if (d) { gotAudio = true; curPieces.push(b64ToInt16(d)); }
               }
               if (m && m.serverContent && m.serverContent.turnComplete) {
+                results.push(concatInt16(curPieces)); curPieces = [];
                 idx++;
-                if (idx < paragraphs.length) sendNext();
+                if (idx < chunkTexts.length) sendNext();
                 else finish(true);
               }
             },
-            onerror: () => finish(gotAudio),
+            onerror: () => finish(false, new Error('שגיאה במנוע הקול.')),
             onclose: () => finish(gotAudio)
           }
         }).then(s => {
           recSession = s;
-          if (recStopFlag) { try { s.close(); } catch (e) { } return finish(gotAudio); }
+          if (recStopFlag) { try { s.close(); } catch (e) { } return finish(false, new Error('ההקלטה בוטלה.')); }
           sendNext();
         }).catch(e => finish(false, e));
       });
@@ -2977,9 +3164,62 @@
     function previewSavedAudio() {
       // Toggle: if it's already playing, stop.
       if (previewPlaying || ttsState !== 'idle') { stopNarration(); return; }
-      if (!savedManifest || !savedManifest.audioUrl) { notify('אין הקלטה שמורה.', 'err'); return; }
+      if (!activeVersion || !activeVersion.audioUrl) { notify('אין הקלטה שמורה.', 'err'); return; }
       previewPlaying = true;
-      playSavedRecording(savedManifest.audioUrl);
+      playSavedRecording(activeVersion.audioUrl);
+    }
+
+    // ---- Archive modal ----
+    async function openArchive() {
+      const ov = document.getElementById('archiveModal');
+      const box = document.getElementById('archiveList');
+      box.innerHTML = '<p class="set-hint">טוען…</p>';
+      ov.classList.add('open');
+      document.addEventListener('keydown', archiveEsc);
+      try {
+        const j = await fetch('/api/narration-versions', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'listArchive', lang: setLangCode })
+        }).then(r => r.json());
+        const versions = (j && j.versions) || [];
+        if (!versions.length) { box.innerHTML = '<p class="set-hint">אין גרסאות בארכיון.</p>'; return; }
+        box.innerHTML = '';
+        versions.forEach((v) => {
+          const row = document.createElement('div');
+          row.className = 'arch-row';
+          const d = v.createdAt ? new Date(v.createdAt) : null;
+          const when = d ? d.toLocaleString('he-IL') : '';
+          const info = document.createElement('div');
+          info.className = 'arch-info';
+          info.innerHTML = '<b>' + (v.hasAudio ? '🎙️ מוקלטת' : '📝 ללא הקלטה') + '</b>' +
+            '<span>' + when + ' · ' + v.recordedChunks + '/' + v.chunks + ' חלקים</span>' +
+            '<em>' + (v.preview || '') + '…</em>';
+          const btn = document.createElement('button');
+          btn.className = 'set-btn-tiny form-submit';
+          btn.textContent = 'הפעל';
+          btn.onclick = () => activateArchiveVersion(v.id);
+          row.appendChild(info); row.appendChild(btn);
+          box.appendChild(row);
+        });
+      } catch (e) { box.innerHTML = '<p class="set-hint err">שגיאה בטעינת הארכיון.</p>'; }
+    }
+    function closeArchive() {
+      document.getElementById('archiveModal').classList.remove('open');
+      document.removeEventListener('keydown', archiveEsc);
+    }
+    function archiveEsc(e) { if (e.key === 'Escape') closeArchive(); }
+    async function activateArchiveVersion(id) {
+      try {
+        const r = await fetch('/api/narration-versions', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'activateArchive', lang: setLangCode, id })
+        });
+        const j = await r.json();
+        if (!r.ok || !j.ok) throw new Error(j.error || 'שגיאה');
+        closeArchive();
+        await loadNarrationSettings();
+        notify('הגרסה הוחזרה מהארכיון והופעלה ✓', 'ok');
+      } catch (e) { notify('שגיאה בהחזרת הגרסה: ' + (e.message || e), 'err'); }
     }
 
     // ---- General settings: default document language + default narration speed.
