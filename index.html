@@ -1429,6 +1429,42 @@
       margin-bottom: 10px;
     }
 
+    .set-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .set-speed-row .set-range {
+      flex: 1;
+    }
+
+    .set-speed-label {
+      font-size: 12px;
+      color: #6a7488;
+      white-space: nowrap;
+    }
+
+    .set-speed-label b {
+      color: var(--navy);
+    }
+
+    .set-btn-tiny {
+      flex: 0 0 auto;
+      min-width: 0;
+      margin-top: 0;
+      padding: 7px 14px;
+      font-size: 13px;
+      border-radius: 8px;
+    }
+
+    .set-section.set-grow .set-status,
+    .set-section.set-grow .set-hint {
+      margin: 2px 0 0;
+    }
+
     .set-col-divider {
       border-inline-start: 1px solid #eee6d8;
     }
@@ -1469,7 +1505,7 @@
       transition: background .12s, color .12s;
     }
 
-    .set-seg button + button {
+    .set-seg button+button {
       border-inline-start: 1px solid #ddd6ca;
     }
 
@@ -1500,7 +1536,7 @@
     }
 
     .set-section {
-      margin-bottom: 22px;
+      /* margin-bottom: 22px; */
     }
 
     .set-section:last-child {
@@ -1706,27 +1742,27 @@
     <div class="controls-group">
       <span class="group-label">ייצוא</span>
       <div class="toolbar">
-    <button class="btn-png" id="btnPng" onclick="exportPNG()">
-      <svg viewBox="0 0 24 24">
-        <path
-          d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
-      </svg>
-      <span data-en="Export as Image (PNG)">ייצוא כתמונה (PNG)</span>
-    </button>
-    <button class="btn-pdf" id="btnPdf" onclick="exportPDF()">
-      <svg viewBox="0 0 24 24">
-        <path
-          d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H7.5v2H6V7h3c.83 0 1.5.67 1.5 1.5v2zm5 2c0 .83-.67 1.5-1.5 1.5h-3V7h3c.83 0 1.5.67 1.5 1.5v5zm4-5.5H18v1h1.5V13H18v3h-1.5V7H20v1z" />
-      </svg>
-      <span data-en="Export as PDF (2 pages)">ייצוא כ-PDF (2 עמודים)</span>
-    </button>
-    <button class="btn-word" id="btnWord" onclick="exportWord()">
-      <svg viewBox="0 0 24 24">
-        <path
-          d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM6 20V4h5v7h7v9H6z" />
-      </svg>
-      <span data-en="Export as Word">ייצוא כ-Word</span>
-    </button>
+        <button class="btn-png" id="btnPng" onclick="exportPNG()">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+          </svg>
+          <span data-en="Export as Image (PNG)">ייצוא כתמונה (PNG)</span>
+        </button>
+        <button class="btn-pdf" id="btnPdf" onclick="exportPDF()">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H7.5v2H6V7h3c.83 0 1.5.67 1.5 1.5v2zm5 2c0 .83-.67 1.5-1.5 1.5h-3V7h3c.83 0 1.5.67 1.5 1.5v5zm4-5.5H18v1h1.5V13H18v3h-1.5V7H20v1z" />
+          </svg>
+          <span data-en="Export as PDF (2 pages)">ייצוא כ-PDF (2 עמודים)</span>
+        </button>
+        <button class="btn-word" id="btnWord" onclick="exportWord()">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM6 20V4h5v7h7v9H6z" />
+          </svg>
+          <span data-en="Export as Word">ייצוא כ-Word</span>
+        </button>
       </div>
     </div>
 
@@ -1920,8 +1956,8 @@
             <div class="exp-item">
               <div class="exp-year">2010–2012</div>
               <div class="exp-dot"></div>
-              <div class="exp-company" data-en="Bezeq — CRM System (via Matrix) | CRM PeopleSoft Developer">בזק — מערכת <span
-                  class="en">CRM</span> (עובד חברת <span class="en">Matrix</span>)
+              <div class="exp-company" data-en="Bezeq — CRM System (via Matrix) | CRM PeopleSoft Developer">בזק — מערכת
+                <span class="en">CRM</span> (עובד חברת <span class="en">Matrix</span>)
                 | מפתח <span class="en">CRM PeopleSoft</span></div>
               <ul class="exp-list">
                 <li data-en="Developing modules within the organization's CRM system.">
@@ -2251,27 +2287,27 @@
             <div class="set-row">
               <label class="set-label">תסריט ההקראה</label>
               <button class="set-btn-ghost" id="btnGenScript" onclick="generateScript()"
-              title="שולח את קורות החיים ל‑AI ומחליף את תוכן התיבה בתסריט חדש">✨ הפק תסריט עם AI</button>
+                title="שולח את קורות החיים ל‑AI ומחליף את תוכן התיבה בתסריט חדש">✨ הפק תסריט עם AI</button>
             </div>
             <textarea id="scriptArea" class="set-textarea"
               placeholder="לחץ 'הפק תסריט עם AI' כדי שה‑AI ייצר תסריט קריינות מקורות החיים, או כתוב/ערוך ידנית. פסקאות מופרדות בשורה ריקה."></textarea>
-            <button class="form-submit" id="btnSaveScript" onclick="saveScript()">שמירת התסריט</button>
-          </div>
 
-          <div class="set-section">
-            <label class="set-label">הקלטה <span class="set-muted">(נשמרת בשרת לכל המבקרים)</span></label>
-            <p class="set-status" id="recStatus">טוען…</p>
-            <div class="set-rec-row">
-              <button class="form-submit set-btn-sm" id="btnRecord" onclick="recordNarration()">🎙️ הקלט</button>
-              <button class="set-btn-ghost" id="btnPreview" onclick="previewSavedAudio()">▶︎ השמע</button>
+            <!-- Row: save (right) + record (left) -->
+            <div class="set-actions">
+              <button class="form-submit set-btn-tiny" id="btnSaveScript" onclick="saveScript()">שמירה</button>
+              <button class="form-submit set-btn-tiny" id="btnRecord" onclick="recordNarration()">🎙️ הקלט</button>
             </div>
-            <p class="set-hint" id="recHint"></p>
-          </div>
 
-          <div class="set-section">
-            <label class="set-label">מהירות הקראה ברירת מחדל <span class="set-muted" id="setDefaultSpeedVal">1.0×</span></label>
-            <input type="range" id="setDefaultSpeed" class="set-range" min="0.5" max="2" step="0.1" value="1"
-              oninput="setDefaultSpeed(this.value)">
+            <!-- Row: speed slider + play (left) -->
+            <div class="set-actions set-speed-row">
+              <span class="set-speed-label">מהירות <b id="setDefaultSpeedVal">1.0×</b></span>
+              <input type="range" id="setDefaultSpeed" class="set-range" min="0.5" max="2" step="0.1" value="1"
+                oninput="setDefaultSpeed(this.value)">
+              <button class="set-btn-ghost set-btn-tiny" id="btnPreview" onclick="previewSavedAudio()">▶︎ השמע</button>
+            </div>
+
+            <p class="set-status" id="recStatus">טוען…</p>
+            <p class="set-hint" id="recHint"></p>
           </div>
         </div>
 
