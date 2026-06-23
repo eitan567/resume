@@ -1323,6 +1323,66 @@
       opacity: .6;
       cursor: wait;
     }
+
+    /* Narration speed slider */
+    .speed-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 4px 2px 0;
+    }
+
+    .speed-row label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #9a917f;
+    }
+
+    .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .speed-control input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      border-radius: 4px;
+      background: #e0dacf;
+      cursor: pointer;
+    }
+
+    .speed-control input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: var(--navy);
+      border: 2px solid #fff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
+      cursor: pointer;
+    }
+
+    .speed-control input[type="range"]::-moz-range-thumb {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: var(--navy);
+      border: 2px solid #fff;
+      cursor: pointer;
+    }
+
+    .speed-control span {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--navy);
+      min-width: 40px;
+      text-align: left;
+      direction: ltr;
+    }
   </style>
 </head>
 
@@ -1413,6 +1473,14 @@
           </svg>
           <span id="narrateLabel">הקראת קורות החיים</span>
         </button>
+        <div class="speed-row">
+          <label for="narrateSpeed">מהירות הקראה</label>
+          <div class="speed-control">
+            <input type="range" id="narrateSpeed" min="0.5" max="2" step="0.1" value="1"
+              oninput="setNarrationRate(this.value)">
+            <span id="narrateSpeedVal">1.0×</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1898,7 +1966,14 @@
     // never reaches the client). Fallbacks: Cloud TTS, then the browser voice.
     let ttsState = 'idle';
     let liveSession = null, liveCtx = null, liveSources = [], liveStop = false, liveNextTime = 0;
-    let cloudAudio = null;
+    let cloudAudio = null, narrationRate = 1;
+    function setNarrationRate(v) {
+      narrationRate = parseFloat(v) || 1;
+      const el = document.getElementById('narrateSpeedVal');
+      if (el) el.textContent = narrationRate.toFixed(1) + '×';
+      // Cloud-TTS fallback (<audio>) can change speed live without pitch change.
+      if (cloudAudio) { try { cloudAudio.preservesPitch = true; cloudAudio.playbackRate = narrationRate; } catch (e) { } }
+    }
     function setNarrateLabel(state) {
       ttsState = state;
       const l = document.getElementById('narrateLabel');
@@ -2013,10 +2088,11 @@
       audioBuf.getChannelData(0).set(f32);
       const src = liveCtx.createBufferSource();
       src.buffer = audioBuf; src.connect(liveCtx.destination);
+      src.playbackRate.value = narrationRate; // speed control (applies to new chunks)
       const now = liveCtx.currentTime;
       if (liveNextTime < now) liveNextTime = now + 0.04;
       src.start(liveNextTime);
-      liveNextTime += audioBuf.duration;
+      liveNextTime += audioBuf.duration / narrationRate;
       liveSources.push(src);
     }
     // Fallback 1: Cloud TTS (chunked MP3 from /api/tts).
@@ -2045,6 +2121,7 @@
       return new Promise((resolve) => {
         const url = URL.createObjectURL(blob);
         cloudAudio = new Audio(url);
+        try { cloudAudio.preservesPitch = true; cloudAudio.playbackRate = narrationRate; } catch (e) { }
         cloudAudio.onended = () => { URL.revokeObjectURL(url); resolve(); };
         cloudAudio.onerror = () => { URL.revokeObjectURL(url); resolve(); };
         cloudAudio.play().catch(() => resolve());
