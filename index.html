@@ -1720,6 +1720,81 @@
       color: #9aa3b5;
       font-size: 11px;
     }
+
+    /* In-app toast notifications (we never use the browser's alert/confirm) */
+    .toast-wrap {
+      position: fixed;
+      bottom: 22px;
+      left: 22px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: min(380px, 90vw);
+    }
+
+    .toast {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: #fff;
+      border: 1px solid #e3ddd1;
+      border-inline-start: 4px solid var(--navy);
+      border-radius: 10px;
+      padding: 12px 14px;
+      box-shadow: 0 14px 38px -16px rgba(40, 34, 28, .55);
+      font-size: 13.5px;
+      color: #2b2f36;
+      transition: opacity .18s, transform .18s;
+      animation: toastIn .2s ease;
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .toast.ok { border-inline-start-color: #1c8049; }
+    .toast.err { border-inline-start-color: #b8331f; }
+    .toast.info { border-inline-start-color: #2b5aa0; }
+
+    .toast-msg {
+      flex: 1;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    .toast-x {
+      flex: 0 0 auto;
+      border: none;
+      background: transparent;
+      color: #9a917f;
+      font-size: 12px;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 5px;
+    }
+
+    .toast-x:hover { background: #f0ebe1; color: #333; }
+
+    /* In-app confirm dialog */
+    .confirm-box { width: min(420px, 92vw); }
+
+    .confirm-box .modal-body { padding: 20px; }
+
+    .confirm-msg {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #353a42;
+      margin: 0 0 18px;
+      white-space: pre-wrap;
+    }
+
+    .confirm-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-start;
+    }
   </style>
 </head>
 
@@ -2345,10 +2420,81 @@
     </div>
   </div>
 
+  <!-- In-app toast notifications -->
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <!-- In-app confirm dialog -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal confirm-box" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <span class="modal-title" id="confirmTitle">אישור</span>
+      </div>
+      <div class="modal-body">
+        <p class="confirm-msg" id="confirmMsg"></p>
+        <div class="confirm-actions">
+          <button class="form-submit set-btn-tiny" id="confirmOk">אישור</button>
+          <button class="set-btn-ghost set-btn-tiny" id="confirmCancel">ביטול</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
   <script>
+    // ---- In-app notifications (we never use the browser's alert/confirm) ----
+    function notify(message, type, timeout) {
+      const wrap = document.getElementById('toastWrap');
+      if (!wrap) return () => { };
+      const t = document.createElement('div');
+      t.className = 'toast ' + (type || 'info');
+      const m = document.createElement('div');
+      m.className = 'toast-msg';
+      m.textContent = message;
+      const x = document.createElement('button');
+      x.className = 'toast-x';
+      x.innerHTML = '&#10005;';
+      let done = false;
+      const remove = () => {
+        if (done) return; done = true;
+        t.style.opacity = '0'; t.style.transform = 'translateY(10px)';
+        setTimeout(() => t.remove(), 180);
+      };
+      x.onclick = remove;
+      t.appendChild(m); t.appendChild(x);
+      wrap.appendChild(t);
+      const ms = (timeout === undefined) ? (type === 'err' ? 6000 : 4000) : timeout;
+      if (ms) setTimeout(remove, ms);
+      return remove;
+    }
+    // Promise-based confirm dialog (replaces window.confirm).
+    function confirmDialog(opts) {
+      opts = opts || {};
+      return new Promise((resolve) => {
+        const ov = document.getElementById('confirmModal');
+        document.getElementById('confirmTitle').textContent = opts.title || 'אישור';
+        document.getElementById('confirmMsg').textContent = opts.message || '';
+        const ok = document.getElementById('confirmOk');
+        const cancel = document.getElementById('confirmCancel');
+        ok.textContent = opts.okText || 'אישור';
+        cancel.textContent = opts.cancelText || 'ביטול';
+        const close = (val) => {
+          ov.classList.remove('open');
+          ok.onclick = cancel.onclick = ov.onclick = null;
+          document.removeEventListener('keydown', onKey);
+          resolve(val);
+        };
+        const onKey = (e) => { if (e.key === 'Escape') close(false); };
+        ok.onclick = () => close(true);
+        cancel.onclick = () => close(false);
+        ov.onclick = (e) => { if (e.target === ov) close(false); };
+        document.addEventListener('keydown', onKey);
+        ov.classList.add('open');
+        setTimeout(() => ok.focus(), 60);
+      });
+    }
+
     // ---- Language switch (Hebrew / English) ----
     window.__lang = 'he';
     const i18nCache = new WeakMap();
@@ -2378,6 +2524,7 @@
     let ttsState = 'idle';
     let liveSession = null, liveCtx = null, liveSources = [], liveStop = false, liveNextTime = 0;
     let cloudAudio = null, narrationRate = 1;
+    let previewPlaying = false;   // true while the settings "השמע" button is playing
     function setNarrationRate(v) {
       narrationRate = parseFloat(v) || 1;
       const el = document.getElementById('narrateSpeedVal');
@@ -2392,6 +2539,10 @@
       if (l) l.textContent = state === 'playing' ? 'עצירת ההקראה'
         : (state === 'loading' ? 'מכין הקראה…' : 'הקראת קורות החיים');
       if (b) b.classList.toggle('narrating', state !== 'idle');
+      // The settings "השמע" button toggles to "עצור" while it is the one playing.
+      if (state === 'idle') previewPlaying = false;
+      const pv = document.getElementById('btnPreview');
+      if (pv) pv.textContent = (previewPlaying && state === 'playing') ? '⏹ עצור' : '▶︎ השמע';
     }
     function narrationText() {
       return (document.getElementById('doc').innerText || '')
@@ -2673,10 +2824,8 @@
         if (r.ok && j.ok) {
           savedManifest = j.manifest;
           btn.disabled = false; btn.textContent = orig;
-          setStatus('recHint', 'התסריט נשמר. ✓', 'ok');
-          if (confirm('התסריט נשמר.\n\nלהקליט את ההקראה עכשיו? (ייקח כדקה — נא לא לסגור את החלון)')) {
-            recordNarration();
-          }
+          setStatus('recHint', 'התסריט נשמר. כשתהיה מרוצה ממנו — לחץ "הקלט" כדי להפיק את ההקראה.', 'ok');
+          notify('התסריט נשמר ✓', 'ok');
           return;
         }
         setStatus('recHint', j.error || 'שמירה נכשלה.', 'err');
@@ -2736,8 +2885,10 @@
         setStatus('recStatus', '✓ קיימת הקלטה שמורה' + (when ? ' (עודכן ' + when + ')' : ''), 'ok');
         document.getElementById('btnPreview').disabled = false;
         setStatus('recHint', 'ההקלטה נשמרה ומשותפת לכל המבקרים. ✓', 'ok');
+        notify('ההקלטה הופקה ונשמרה ✓', 'ok');
       } catch (e) {
         setStatus('recHint', 'שגיאה בהקלטה: ' + (e.message || e), 'err');
+        notify('שגיאה בהקלטה: ' + (e.message || e), 'err');
       }
       btn.disabled = false; btn.textContent = orig;
     }
@@ -2824,8 +2975,10 @@
       return new Blob([buf], { type: 'audio/wav' });
     }
     function previewSavedAudio() {
-      if (!savedManifest || !savedManifest.audioUrl) { setStatus('recHint', 'אין הקלטה שמורה.', 'err'); return; }
-      stopNarration();
+      // Toggle: if it's already playing, stop.
+      if (previewPlaying || ttsState !== 'idle') { stopNarration(); return; }
+      if (!savedManifest || !savedManifest.audioUrl) { notify('אין הקלטה שמורה.', 'err'); return; }
+      previewPlaying = true;
       playSavedRecording(savedManifest.audioUrl);
     }
 
@@ -3235,7 +3388,7 @@
           link.click();
           if (i < pages.length - 1) await new Promise(r => setTimeout(r, 500));
         }
-      } catch (e) { alert('שגיאה בייצוא התמונה: ' + e.message); }
+      } catch (e) { notify('שגיאה בייצוא התמונה: ' + e.message, 'err'); }
       busy(false);
     }
     async function exportPDF() {
@@ -3256,7 +3409,7 @@
           pdf.addImage(img, 'JPEG', 0, 0, pw, ph);
         }
         pdf.save(window.__lang === 'en' ? 'Eitan_Baron_Resume.pdf' : 'איתן_ברון_קורות_חיים.pdf');
-      } catch (e) { alert('שגיאה בייצוא ה-PDF: ' + e.message); }
+      } catch (e) { notify('שגיאה בייצוא ה-PDF: ' + e.message, 'err'); }
       busy(false);
     }
     async function exportWord() {
@@ -3752,7 +3905,7 @@
         link.click();
         URL.revokeObjectURL(url);
       } catch (e) {
-        alert('שגיאה בייצוא ל-Word: ' + e.message);
+        notify('שגיאה בייצוא ל-Word: ' + e.message, 'err');
       }
       busy(false);
     }
