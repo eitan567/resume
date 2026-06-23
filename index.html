@@ -1490,7 +1490,7 @@
       border-radius: 8px;
       background: #fff;
       color: #353a42;
-      max-width: 168px;
+      max-width: 185px;
       cursor: pointer;
     }
 
@@ -1507,7 +1507,10 @@
       transition: background .12s, border-color .12s;
     }
 
-    .set-icon-btn:hover { background: #faf7f1; border-color: #c7bfb1; }
+    .set-icon-btn:hover {
+      background: #faf7f1;
+      border-color: #c7bfb1;
+    }
 
     /* Archive list */
     .arch-row {
@@ -1519,7 +1522,9 @@
       border-bottom: 1px solid #efe9dd;
     }
 
-    .arch-row:last-child { border-bottom: none; }
+    .arch-row:last-child {
+      border-bottom: none;
+    }
 
     .arch-info {
       display: flex;
@@ -1528,9 +1533,25 @@
       min-width: 0;
     }
 
-    .arch-info b { font-size: 13px; color: var(--navy); }
-    .arch-info span { font-size: 11.5px; color: #6a7488; }
-    .arch-info em { font-size: 11.5px; color: #9aa3b5; font-style: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px; }
+    .arch-info b {
+      font-size: 13px;
+      color: var(--navy);
+    }
+
+    .arch-info span {
+      font-size: 11.5px;
+      color: #6a7488;
+    }
+
+    .arch-info em {
+      font-size: 11.5px;
+      color: #9aa3b5;
+      font-style: normal;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 260px;
+    }
 
     .set-section.set-grow .set-status,
     .set-section.set-grow .set-hint {
@@ -1808,13 +1829,28 @@
     }
 
     @keyframes toastIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: none; }
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
     }
 
-    .toast.ok { border-inline-start-color: #1c8049; }
-    .toast.err { border-inline-start-color: #b8331f; }
-    .toast.info { border-inline-start-color: #2b5aa0; }
+    .toast.ok {
+      border-inline-start-color: #1c8049;
+    }
+
+    .toast.err {
+      border-inline-start-color: #b8331f;
+    }
+
+    .toast.info {
+      border-inline-start-color: #2b5aa0;
+    }
 
     .toast-msg {
       flex: 1;
@@ -1833,12 +1869,19 @@
       border-radius: 5px;
     }
 
-    .toast-x:hover { background: #f0ebe1; color: #333; }
+    .toast-x:hover {
+      background: #f0ebe1;
+      color: #333;
+    }
 
     /* In-app confirm dialog */
-    .confirm-box { width: min(420px, 92vw); }
+    .confirm-box {
+      width: min(420px, 92vw);
+    }
 
-    .confirm-box .modal-body { padding: 20px; }
+    .confirm-box .modal-body {
+      padding: 20px;
+    }
 
     .confirm-msg {
       font-size: 14px;
@@ -2111,7 +2154,8 @@
               <div class="exp-dot"></div>
               <div class="exp-company" data-en="Bezeq — CRM System (via Matrix) | CRM PeopleSoft Developer">בזק — מערכת
                 <span class="en">CRM</span> (עובד חברת <span class="en">Matrix</span>)
-                | מפתח <span class="en">CRM PeopleSoft</span></div>
+                | מפתח <span class="en">CRM PeopleSoft</span>
+              </div>
               <ul class="exp-list">
                 <li data-en="Developing modules within the organization's CRM system.">
                   פיתוח מודולים במערכת ה-<span class="en">CRM</span> של
@@ -2490,7 +2534,8 @@
         <button class="modal-close" onclick="closeArchive()" aria-label="סגור">&#10005;</button>
       </div>
       <div class="modal-body">
-        <p class="set-hint" style="margin:0 0 12px">בחירת גרסה מהארכיון תפעיל אותה, והגרסה הוותיקה ביותר ברשימה הפעילה תועבר לארכיון במקומה.</p>
+        <p class="set-hint" style="margin:0 0 12px">בחירת גרסה מהארכיון תפעיל אותה, והגרסה הוותיקה ביותר ברשימה הפעילה
+          תועבר לארכיון במקומה.</p>
         <div id="archiveList"></div>
       </div>
     </div>
