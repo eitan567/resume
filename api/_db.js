@@ -1,76 +1,75 @@
-// Shared Turso (libSQL) client + schema. Files prefixed with "_" are NOT routed
-// by Vercel, so this is a plain module imported by the API functions.
+// Shared Vercel Postgres (Neon) connection + schema. Files prefixed with "_" are
+// NOT routed by Vercel, so this is a plain module imported by the API functions.
 //
-// Turso is SQLite hosted in the cloud, so unlike a local .db file it persists
-// across Vercel's stateless serverless invocations. Configure two env vars:
-//   TURSO_DATABASE_URL  (e.g. libsql://your-db.turso.io)
-//   TURSO_AUTH_TOKEN    (the database token)
+// Add the Postgres/Neon integration from the Vercel dashboard — it injects the
+// connection string env var automatically (POSTGRES_URL). No manual setup beyond
+// connecting the database.
 //
-// We use the "/web" client (pure JS over HTTP) — no native bindings, which is
-// the safe choice on serverless.
+// getDb() returns a pool whose .query(text, params) uses $1, $2 placeholders.
 
-let _clientPromise = null;
+let _poolPromise = null;
 let _schemaReady = false;
+
+function connectionString() {
+  return (
+    process.env.POSTGRES_URL ||
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_PRISMA_URL ||
+    process.env.POSTGRES_URL_NON_POOLING ||
+    ""
+  );
+}
 
 async function ensureSchema(db) {
   if (_schemaReady) return;
-  await db.batch(
-    [
-      `CREATE TABLE IF NOT EXISTS narration (
-        lang TEXT PRIMARY KEY,
-        script TEXT NOT NULL DEFAULT '[]',
-        audio_url TEXT,
-        updated_at TEXT NOT NULL
-      )`,
-      `CREATE TABLE IF NOT EXISTS chat_logs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ip TEXT,
-        lang TEXT,
-        question TEXT,
-        answer TEXT,
-        created_at TEXT NOT NULL
-      )`,
-      `CREATE TABLE IF NOT EXISTS contact_submissions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        email TEXT,
-        phone TEXT,
-        message TEXT,
-        ip TEXT,
-        created_at TEXT NOT NULL
-      )`,
-      `CREATE TABLE IF NOT EXISTS usage_events (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        event TEXT NOT NULL,
-        lang TEXT,
-        ip TEXT,
-        created_at TEXT NOT NULL
-      )`,
-    ],
-    "write"
-  );
+  await db.query(`CREATE TABLE IF NOT EXISTS narration (
+    lang TEXT PRIMARY KEY,
+    script TEXT NOT NULL DEFAULT '[]',
+    audio_url TEXT,
+    updated_at TEXT NOT NULL
+  )`);
+  await db.query(`CREATE TABLE IF NOT EXISTS chat_logs (
+    id SERIAL PRIMARY KEY,
+    ip TEXT,
+    lang TEXT,
+    question TEXT,
+    answer TEXT,
+    created_at TEXT NOT NULL
+  )`);
+  await db.query(`CREATE TABLE IF NOT EXISTS contact_submissions (
+    id SERIAL PRIMARY KEY,
+    name TEXT,
+    email TEXT,
+    phone TEXT,
+    message TEXT,
+    ip TEXT,
+    created_at TEXT NOT NULL
+  )`);
+  await db.query(`CREATE TABLE IF NOT EXISTS usage_events (
+    id SERIAL PRIMARY KEY,
+    event TEXT NOT NULL,
+    lang TEXT,
+    ip TEXT,
+    created_at TEXT NOT NULL
+  )`);
   _schemaReady = true;
 }
 
 async function getDb() {
-  if (!process.env.TURSO_DATABASE_URL) {
-    throw new Error("TURSO_DATABASE_URL is not configured");
-  }
-  if (!_clientPromise) {
-    _clientPromise = (async () => {
-      const { createClient } = await import("@libsql/client/web");
-      const db = createClient({
-        url: process.env.TURSO_DATABASE_URL,
-        authToken: process.env.TURSO_AUTH_TOKEN,
-      });
-      await ensureSchema(db);
-      return db;
+  const cs = connectionString();
+  if (!cs) throw new Error("POSTGRES_URL is not configured");
+  if (!_poolPromise) {
+    _poolPromise = (async () => {
+      const { createPool } = await import("@vercel/postgres");
+      const pool = createPool({ connectionString: cs });
+      await ensureSchema(pool);
+      return pool;
     })().catch((e) => {
-      _clientPromise = null; // allow retry on next request
+      _poolPromise = null; // allow retry on next request
       throw e;
     });
   }
-  return _clientPromise;
+  return _poolPromise;
 }
 
 // Best-effort: never let logging/analytics break the main request.

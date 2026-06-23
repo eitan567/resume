@@ -19,11 +19,11 @@ module.exports = async (req, res) => {
 
     const db = await getDb();
     const [events, chatCount, contactCount, recentChats, recentContacts] = await Promise.all([
-      db.execute("SELECT event, COUNT(*) AS n FROM usage_events GROUP BY event"),
-      db.execute("SELECT COUNT(*) AS n FROM chat_logs"),
-      db.execute("SELECT COUNT(*) AS n FROM contact_submissions"),
-      db.execute("SELECT question, lang, created_at FROM chat_logs ORDER BY id DESC LIMIT 8"),
-      db.execute("SELECT name, email, phone, message, created_at FROM contact_submissions ORDER BY id DESC LIMIT 8"),
+      db.query("SELECT event, COUNT(*) AS n FROM usage_events GROUP BY event"),
+      db.query("SELECT COUNT(*) AS n FROM chat_logs"),
+      db.query("SELECT COUNT(*) AS n FROM contact_submissions"),
+      db.query("SELECT question, lang, created_at FROM chat_logs ORDER BY id DESC LIMIT 8"),
+      db.query("SELECT name, email, phone, message, created_at FROM contact_submissions ORDER BY id DESC LIMIT 8"),
     ]);
 
     const eventCounts = {};

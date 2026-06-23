@@ -29,10 +29,10 @@ module.exports = async (req, res) => {
     const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || "unknown";
 
     const db = await getDb();
-    await db.execute({
-      sql: "INSERT INTO usage_events (event, lang, ip, created_at) VALUES (?, ?, ?, ?)",
-      args: [event, lang, ip, new Date().toISOString()],
-    });
+    await db.query(
+      "INSERT INTO usage_events (event, lang, ip, created_at) VALUES ($1, $2, $3, $4)",
+      [event, lang, ip, new Date().toISOString()]
+    );
     res.status(200).json({ ok: true });
   } catch (error) {
     console.error("track error:", error);

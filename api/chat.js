@@ -114,18 +114,14 @@ module.exports = async (req, res) => {
     await safe(async () => {
       const db = await getDb();
       const now = new Date().toISOString();
-      await db.batch(
-        [
-          {
-            sql: "INSERT INTO chat_logs (ip, lang, question, answer, created_at) VALUES (?, ?, ?, ?, ?)",
-            args: [ip, lang === "en" ? "en" : "he", message, answer, now],
-          },
-          {
-            sql: "INSERT INTO usage_events (event, lang, ip, created_at) VALUES (?, ?, ?, ?)",
-            args: ["chat_message", lang === "en" ? "en" : "he", ip, now],
-          },
-        ],
-        "write"
+      const code = lang === "en" ? "en" : "he";
+      await db.query(
+        "INSERT INTO chat_logs (ip, lang, question, answer, created_at) VALUES ($1, $2, $3, $4, $5)",
+        [ip, code, message, answer, now]
+      );
+      await db.query(
+        "INSERT INTO usage_events (event, lang, ip, created_at) VALUES ($1, $2, $3, $4)",
+        ["chat_message", code, ip, now]
       );
     });
 

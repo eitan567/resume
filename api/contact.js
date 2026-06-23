@@ -1,4 +1,4 @@
-// Stores a contact-form submission in Turso. Runs alongside Web3Forms (which
+// Stores a contact-form submission in Postgres. Runs alongside Web3Forms (which
 // delivers the email); this keeps a queryable record for the admin.
 
 const { getDb } = require("./_db");
@@ -23,18 +23,13 @@ module.exports = async (req, res) => {
     const now = new Date().toISOString();
 
     const db = await getDb();
-    await db.batch(
-      [
-        {
-          sql: "INSERT INTO contact_submissions (name, email, phone, message, ip, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-          args: [name, email, phone, message, ip, now],
-        },
-        {
-          sql: "INSERT INTO usage_events (event, lang, ip, created_at) VALUES (?, ?, ?, ?)",
-          args: ["contact_submit", null, ip, now],
-        },
-      ],
-      "write"
+    await db.query(
+      "INSERT INTO contact_submissions (name, email, phone, message, ip, created_at) VALUES ($1, $2, $3, $4, $5, $6)",
+      [name, email, phone, message, ip, now]
+    );
+    await db.query(
+      "INSERT INTO usage_events (event, lang, ip, created_at) VALUES ($1, $2, $3, $4)",
+      ["contact_submit", null, ip, now]
     );
 
     res.status(200).json({ ok: true });

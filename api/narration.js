@@ -1,6 +1,6 @@
 // Public read: returns the saved narration manifest for a language
 // ({ script: string[], audioUrl, updatedAt }) or empty if none saved yet.
-// Backed by Turso (libSQL). The audio file itself lives in Blob; audio_url
+// Backed by Vercel Postgres. The audio file itself lives in Blob; audio_url
 // points to it.
 
 const { getDb } = require("./_db");
@@ -10,10 +10,10 @@ module.exports = async (req, res) => {
   try {
     const lang = ((req.query && req.query.lang) === "en") ? "en" : "he";
     const db = await getDb();
-    const r = await db.execute({
-      sql: "SELECT script, audio_url, updated_at FROM narration WHERE lang = ?",
-      args: [lang],
-    });
+    const r = await db.query(
+      "SELECT script, audio_url, updated_at FROM narration WHERE lang = $1",
+      [lang]
+    );
     if (!r.rows.length) {
       res.status(200).json({ script: null, audioUrl: null });
       return;

@@ -1,5 +1,5 @@
 // Admin-only: saves the narration manifest (script + audio URL) for a language
-// to Turso. Protected by ADMIN_PASSWORD.
+// to Vercel Postgres. Protected by ADMIN_PASSWORD.
 
 const { getDb } = require("./_db");
 
@@ -25,15 +25,15 @@ module.exports = async (req, res) => {
     const updatedAt = new Date().toISOString();
 
     const db = await getDb();
-    await db.execute({
-      sql: `INSERT INTO narration (lang, script, audio_url, updated_at)
-            VALUES (?, ?, ?, ?)
-            ON CONFLICT(lang) DO UPDATE SET
-              script = excluded.script,
-              audio_url = excluded.audio_url,
-              updated_at = excluded.updated_at`,
-      args: [code, JSON.stringify(scriptArr), audioUrl ? String(audioUrl) : null, updatedAt],
-    });
+    await db.query(
+      `INSERT INTO narration (lang, script, audio_url, updated_at)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (lang) DO UPDATE SET
+         script = EXCLUDED.script,
+         audio_url = EXCLUDED.audio_url,
+         updated_at = EXCLUDED.updated_at`,
+      [code, JSON.stringify(scriptArr), audioUrl ? String(audioUrl) : null, updatedAt]
+    );
 
     res.status(200).json({
       ok: true,
