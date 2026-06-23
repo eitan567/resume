@@ -100,6 +100,12 @@
       margin-top: 2px;
     }
 
+    .controls-footer {
+      margin-top: auto;
+      padding-top: 18px;
+      border-top: 1px solid #ece5d8;
+    }
+
     .controls-group {
       display: flex;
       flex-direction: column;
@@ -190,6 +196,13 @@
       .toolbar {
         flex-direction: row;
         flex-wrap: wrap;
+      }
+
+      /* In the top-bar layout the footer is just another inline item. */
+      .controls-footer {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: none;
       }
     }
 
@@ -1805,6 +1818,12 @@
             <span id="narrateSpeedVal">1.0×</span>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Settings pinned to the bottom of the rail -->
+    <div class="controls-footer">
+      <div class="toolbar">
         <button id="btnSettings" onclick="openModal('settings')">
           <svg viewBox="0 0 24 24">
             <path
