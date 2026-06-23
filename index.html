@@ -2432,7 +2432,7 @@
 
           <div class="set-section">
             <label class="set-label" for="scriptPrompt">הנחיה ל‑AI <span class="set-muted">(אופציונלי)</span></label>
-            <textarea id="scriptPrompt" class="set-textarea" rows="2"
+            <textarea id="scriptPrompt" class="set-textarea" rows="2" onblur="saveScriptPrompt()"
               placeholder="איך לכתוב את התסריט? לדוגמה: בגוף ראשון, טון נלהב, להדגיש את הניסיון הבנקאי…"></textarea>
           </div>
 
@@ -2867,6 +2867,7 @@
         }
         reflectRecStatus();
         await loadVersionCombo();
+        await loadScriptPrompt();
       } catch (e) {
         setStatus('recStatus', 'לא ניתן לטעון הגדרות (האם האתר פרוס בשרת?).', 'err');
       }
@@ -2914,10 +2915,30 @@
       } catch (e) { notify('שגיאה בהפעלת הגרסה.', 'err'); }
     }
 
+    // The AI instruction ("הנחיה ל‑AI") is persisted per language in the DB so it
+    // survives reloads.
+    async function loadScriptPrompt() {
+      try {
+        const j = await fetch('/api/narration-versions', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'getPrompt', lang: setLangCode })
+        }).then(r => r.json());
+        document.getElementById('scriptPrompt').value = (j && typeof j.prompt === 'string') ? j.prompt : '';
+      } catch (e) { /* leave empty */ }
+    }
+    function saveScriptPrompt() {
+      const prompt = document.getElementById('scriptPrompt').value;
+      fetch('/api/narration-versions', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'setPrompt', lang: setLangCode, prompt })
+      }).catch(() => { });
+    }
+
     async function generateScript() {
       const text = narrationText();
       if (!text) return;
       const instruction = document.getElementById('scriptPrompt').value.trim();
+      saveScriptPrompt();   // persist the instruction whenever it's used
       const btn = document.getElementById('btnGenScript');
       const orig = btn.textContent;
       btn.disabled = true; btn.textContent = '✨ יוצר…';

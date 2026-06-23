@@ -72,6 +72,12 @@ async function ensureSchema(db) {
     audio_url TEXT,
     created_at TEXT NOT NULL
   )`);
+  // Generic key/value store for small persisted settings (e.g. the per-language
+  // AI script-generation instruction).
+  await db.query(`CREATE TABLE IF NOT EXISTS app_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT
+  )`);
   _schemaReady = true;
 }
 

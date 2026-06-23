@@ -41,6 +41,23 @@ module.exports = async (req, res) => {
     const code = body.lang === "en" ? "en" : "he";
     const db = await getDb();
 
+    if (action === "getPrompt") {
+      const r = await db.query("SELECT value FROM app_settings WHERE key = $1", ["script_prompt_" + code]);
+      res.status(200).json({ ok: true, prompt: r.rows.length ? (r.rows[0].value || "") : "" });
+      return;
+    }
+
+    if (action === "setPrompt") {
+      const prompt = String(body.prompt || "").slice(0, 2000);
+      await db.query(
+        `INSERT INTO app_settings (key, value) VALUES ($1, $2)
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+        ["script_prompt_" + code, prompt]
+      );
+      res.status(200).json({ ok: true });
+      return;
+    }
+
     if (action === "list") {
       const r = await db.query(
         `SELECT id, script, segments, audio_url, active, created_at
