@@ -1103,6 +1103,15 @@
       display: flex;
     }
 
+    html.modal-open,
+    body.modal-open {
+      overflow: hidden;
+    }
+
+    body.modal-open {
+      overscroll-behavior: contain;
+    }
+
     .modal {
       background: #fff;
       border-radius: 16px;
@@ -2843,6 +2852,11 @@
       if (ms) setTimeout(remove, ms);
       return remove;
     }
+    function syncModalScrollLock() {
+      const locked = !!document.querySelector('.modal-overlay.open');
+      document.documentElement.classList.toggle('modal-open', locked);
+      document.body.classList.toggle('modal-open', locked);
+    }
     // Promise-based confirm dialog (replaces window.confirm).
     function confirmDialog(opts) {
       opts = opts || {};
@@ -2856,6 +2870,7 @@
         cancel.textContent = opts.cancelText || 'ביטול';
         const close = (val) => {
           ov.classList.remove('open');
+          syncModalScrollLock();
           ok.onclick = cancel.onclick = ov.onclick = null;
           document.removeEventListener('keydown', onKey);
           resolve(val);
@@ -2866,6 +2881,7 @@
         ov.onclick = (e) => { if (e.target === ov) close(false); };
         document.addEventListener('keydown', onKey);
         ov.classList.add('open');
+        syncModalScrollLock();
         setTimeout(() => ok.focus(), 60);
       });
     }
@@ -2884,6 +2900,7 @@
         const cancel = document.getElementById('promptCancel');
         const close = (val) => {
           ov.classList.remove('open');
+          syncModalScrollLock();
           ok.onclick = cancel.onclick = ov.onclick = input.onkeydown = null;
           document.removeEventListener('keydown', onKey);
           resolve(val);
@@ -2896,6 +2913,7 @@
         input.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); submit(); } };
         document.addEventListener('keydown', onKey);
         ov.classList.add('open');
+        syncModalScrollLock();
         setTimeout(() => input.focus(), 60);
       });
     }
@@ -3325,6 +3343,7 @@
       const ov = document.getElementById('aiPromptModal');
       if (!ov) return;
       ov.classList.add('open');
+      syncModalScrollLock();
       loadScriptPrompt();
       setTimeout(() => {
         const input = document.getElementById('scriptPrompt');
@@ -3334,6 +3353,7 @@
     function closeAiPromptDialog() {
       const ov = document.getElementById('aiPromptModal');
       if (ov) ov.classList.remove('open');
+      syncModalScrollLock();
     }
     async function saveAiPromptDialog() {
       const btn = document.getElementById('btnSaveAiPrompt');
@@ -3423,12 +3443,14 @@
       }
       if (mode === 'recording') renderRecordingInstructionChoices();
       if (ov) ov.classList.add('open');
+      syncModalScrollLock();
       if (mode === 'rewrite') setTimeout(() => prompt && prompt.focus(), 60);
       if (mode === 'niqqud') setTimeout(runSelectionAi, 80);
     }
     function closeSelectionAiDialog() {
       const ov = document.getElementById('selectionAiModal');
       if (ov) ov.classList.remove('open');
+      syncModalScrollLock();
     }
     function replaceScriptSelection(value) {
       const area = document.getElementById('scriptArea');
@@ -3791,6 +3813,7 @@
       const box = document.getElementById('archiveList');
       box.innerHTML = '<p class="set-hint">טוען…</p>';
       ov.classList.add('open');
+      syncModalScrollLock();
       document.addEventListener('keydown', archiveEsc);
       try {
         const j = await fetch('/api/narration-versions', {
@@ -3823,6 +3846,7 @@
     }
     function closeArchive() {
       document.getElementById('archiveModal').classList.remove('open');
+      syncModalScrollLock();
       document.removeEventListener('keydown', archiveEsc);
     }
     function archiveEsc(e) { if (e.key === 'Escape') closeArchive(); }
@@ -3897,6 +3921,7 @@
     const MODAL_IDS = { chat: 'chatModal', contact: 'contactModal', settings: 'settingsModal' };
     function openModal(which) {
       document.getElementById(MODAL_IDS[which] || 'contactModal').classList.add('open');
+      syncModalScrollLock();
       if (which === 'chat') {
         track('chat_open');
         if (!document.getElementById('chatMessages').dataset.greeted) greetChat();
@@ -3911,6 +3936,7 @@
     }
     function closeModal(which) {
       document.getElementById(MODAL_IDS[which] || 'contactModal').classList.remove('open');
+      syncModalScrollLock();
     }
     function modalEsc(e) { if (e.key === 'Escape') { closeModal('chat'); closeModal('contact'); closeModal('settings'); } }
 

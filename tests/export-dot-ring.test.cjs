@@ -231,6 +231,36 @@ assert.match(
 );
 assert.match(
   html,
+  /html\.modal-open,\s*body\.modal-open\s*\{[\s\S]*overflow:\s*hidden;/,
+  'Opening a modal should lock background page scrolling'
+);
+assert.match(
+  html,
+  /function syncModalScrollLock\(\)\s*\{[\s\S]*document\.querySelector\('\.modal-overlay\.open'\)[\s\S]*document\.documentElement\.classList\.toggle\('modal-open'/,
+  'Modal scroll lock should reflect whether any modal overlay is open'
+);
+assert.match(
+  html,
+  /function openModal\(which\)[\s\S]*classList\.add\('open'\);[\s\S]*syncModalScrollLock\(\);/,
+  'General modal opening should enable the shared scroll lock'
+);
+assert.match(
+  html,
+  /function closeModal\(which\)[\s\S]*classList\.remove\('open'\);[\s\S]*syncModalScrollLock\(\);/,
+  'General modal closing should release the shared scroll lock when no modal remains'
+);
+assert.match(
+  html,
+  /function openAiPromptDialog\(\)[\s\S]*classList\.add\('open'\);[\s\S]*syncModalScrollLock\(\);[\s\S]*function closeAiPromptDialog\(\)[\s\S]*classList\.remove\('open'\);[\s\S]*syncModalScrollLock\(\);/,
+  'Nested AI prompt dialog should participate in the shared scroll lock'
+);
+assert.match(
+  html,
+  /async function openArchive\(\)[\s\S]*classList\.add\('open'\);[\s\S]*syncModalScrollLock\(\);[\s\S]*function closeArchive\(\)[\s\S]*classList\.remove\('open'\);[\s\S]*syncModalScrollLock\(\);/,
+  'Archive dialog should participate in the shared scroll lock'
+);
+assert.match(
+  html,
   /let narrationSettingsLoaded = false,[\s\S]*narrationSettingsLoading = null/,
   'Narration settings should keep a loaded/loading state for prefetching'
 );
