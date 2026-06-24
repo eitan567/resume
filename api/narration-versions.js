@@ -80,12 +80,43 @@ module.exports = async (req, res) => {
       return;
     }
 
-    if (action === "setName") {
-      const id = parseInt(body.id, 10);
-      if (!id) { res.status(400).json({ error: "missing id" }); return; }
-      const name = String(body.name || "").slice(0, 80).trim() || null;
-      await db.query(`UPDATE narration_versions SET name = $1 WHERE id = $2 AND lang = $3`, [name, id, code]);
-      res.status(200).json({ ok: true, name });
+    if (action === "create") {
+      const name = String(body.name || "").slice(0, 80).trim();
+      if (!name) { res.status(400).json({ error: "חובה להזין שם לגרסה." }); return; }
+      const mx = await db.query(
+        `SELECT COALESCE(MAX(version_no), 0) m FROM (
+           SELECT version_no FROM narration_versions WHERE lang = $1
+           UNION ALL SELECT version_no FROM narration_versions_archive WHERE lang = $1
+         ) t`,
+        [code]
+      );
+      const versionNo = (mx.rows[0].m || 0) + 1;
+      const now = new Date().toISOString();
+      await db.query(`UPDATE narration_versions SET active = false WHERE lang = $1`, [code]);
+      const ins = await db.query(
+        `INSERT INTO narration_versions (lang, version_no, name, script, segments, audio_url, active, created_at)
+         VALUES ($1, $2, $3, '[]', '[]', NULL, true, $4)
+         RETURNING id, version_no, name, script, segments, audio_url`,
+        [code, versionNo, name, now]
+      );
+      // Enforce the live-version cap: archive the oldest beyond it.
+      const all = await db.query(`SELECT id FROM narration_versions WHERE lang = $1 ORDER BY id ASC`, [code]);
+      const overflow = all.rows.length - MAX_VERSIONS;
+      if (overflow > 0) {
+        const oldIds = all.rows.slice(0, overflow).map((r) => r.id);
+        await db.query(
+          `INSERT INTO narration_versions_archive (lang, version_no, name, script, segments, audio_url, created_at)
+           SELECT lang, version_no, name, script, segments, audio_url, created_at FROM narration_versions
+            WHERE id = ANY($1::int[])`,
+          [oldIds]
+        );
+        await db.query(`DELETE FROM narration_versions WHERE id = ANY($1::int[])`, [oldIds]);
+      }
+      const row = ins.rows[0];
+      res.status(200).json({
+        ok: true,
+        version: { id: row.id, versionNo: row.version_no, name: row.name, script: [], segments: [], audioUrl: null },
+      });
       return;
     }
 

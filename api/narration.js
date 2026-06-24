@@ -22,13 +22,27 @@ module.exports = async (req, res) => {
       [lang]
     );
     if (!r.rows.length) {
-      res.status(200).json({ script: null, audioUrl: null, versionId: null, segments: [] });
+      res.status(200).json({ script: null, audioUrl: null, playUrl: null, versionId: null, segments: [] });
       return;
     }
     const row = r.rows[0];
+    // Visitor playback URL: the active version's own audio if it has one; else
+    // fall back to the most recent version that DOES have audio — so a half-built
+    // (empty) active draft never silences the live narration.
+    let playUrl = row.audio_url || null;
+    if (!playUrl) {
+      const f = await db.query(
+        `SELECT audio_url FROM narration_versions
+          WHERE lang = $1 AND audio_url IS NOT NULL
+          ORDER BY id DESC LIMIT 1`,
+        [lang]
+      );
+      if (f.rows.length) playUrl = f.rows[0].audio_url;
+    }
     res.status(200).json({
       script: parseJson(row.script, []),
       audioUrl: row.audio_url || null,
+      playUrl,
       updatedAt: row.created_at || null,
       versionId: row.id,
       versionNo: row.version_no || null,
