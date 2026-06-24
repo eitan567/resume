@@ -187,6 +187,11 @@ assert.match(
 );
 assert.match(
   html,
+  /\.set-title-row\s*\{[\s\S]*border-bottom:\s*1px solid #eee6d8;[\s\S]*padding-bottom:\s*12px;[\s\S]*margin-bottom:\s*18px;/,
+  'Narration settings title row should have a subtle divider and breathing room below it'
+);
+assert.match(
+  html,
   /<span class="set-title-tools">[\s\S]*id="btnArchive"[\s\S]*id="verCombo"[\s\S]*id="btnNewVersion"/,
   'Archive icon should be to the right of the version combo in RTL title controls'
 );
