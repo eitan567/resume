@@ -26,6 +26,37 @@ STYLE: speak it like a human narrator — smooth, pleasant, confident, in third 
 
 Split the narration into short paragraphs (about 2-4 sentences each) so it can be synthesized paragraph by paragraph. Return JSON: { "paragraphs": ["...", "..."] }.`;
 
+const NIQQUD_SYSTEM = `You help edit Hebrew narration-script text.
+
+Given a selected word or phrase, return 3-5 useful niqqud variants for the exact selected text.
+Preserve the original words, order, spacing and punctuation. Add Hebrew niqqud marks only where helpful.
+If the selected text is not Hebrew or niqqud is not applicable, return the original text as the only suggestion.
+Return JSON: { "suggestions": ["...", "..."] }.`;
+
+const REWRITE_SYSTEM = `You help rewrite a selected snippet inside a professional narration script.
+
+Rewrite only the selected text according to the user's guidance. Preserve truthful résumé facts, the original language, and the surrounding style. Do not invent details and do not rewrite the whole script.
+Return 3 concise alternatives as JSON: { "suggestions": ["...", "..."] }.`;
+
+function parseSuggestions(text) {
+  try {
+    const data = JSON.parse(text || "{}");
+    if (!Array.isArray(data.suggestions)) return [];
+    const seen = new Set();
+    return data.suggestions
+      .map((s) => String(s || "").trim())
+      .filter(Boolean)
+      .filter((s) => {
+        if (seen.has(s)) return false;
+        seen.add(s);
+        return true;
+      })
+      .slice(0, 5);
+  } catch {
+    return [];
+  }
+}
+
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
     res.status(405).json({ error: "Method not allowed" });
@@ -43,13 +74,28 @@ module.exports = async (req, res) => {
     if (typeof body === "string") {
       try { body = JSON.parse(body); } catch { body = {}; }
     }
-    let { text, lang, instruction } = body;
-    if (!text || typeof text !== "string") {
-      res.status(400).json({ error: "text is required." });
-      return;
-    }
-    text = text.slice(0, 8000);
+    let { text, lang, instruction, action, selectedText, context } = body;
+    action = String(action || "script");
+    selectedText = (typeof selectedText === "string" ? selectedText : "").slice(0, 1200).trim();
+    context = (typeof context === "string" ? context : "").slice(0, 8000);
     instruction = (typeof instruction === "string" ? instruction : "").slice(0, 1000).trim();
+
+    if (action === "niqqud" || action === "rewrite") {
+      if (!selectedText) {
+        res.status(400).json({ error: "selectedText is required." });
+        return;
+      }
+      if (action === "rewrite" && !instruction) {
+        res.status(400).json({ error: "instruction is required." });
+        return;
+      }
+    } else {
+      if (!text || typeof text !== "string") {
+        res.status(400).json({ error: "text is required." });
+        return;
+      }
+      text = text.slice(0, 8000);
+    }
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -60,6 +106,35 @@ module.exports = async (req, res) => {
     const { GoogleGenAI, Type } = await import("@google/genai");
     const ai = new GoogleGenAI({ apiKey });
     const langName = lang === "en" ? "English" : "Hebrew";
+
+    if (action === "niqqud" || action === "rewrite") {
+      const systemInstruction = action === "niqqud" ? NIQQUD_SYSTEM : REWRITE_SYSTEM;
+      const contents = action === "niqqud"
+        ? `Language: ${langName}\n\nSelected text:\n"""\n${selectedText}\n"""\n\nScript context for disambiguation:\n"""\n${context}\n"""`
+        : `Language: ${langName}\n\nUser rewrite guidance:\n"""\n${instruction}\n"""\n\nSelected text to rewrite:\n"""\n${selectedText}\n"""\n\nScript context:\n"""\n${context}\n"""`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents,
+        config: {
+          systemInstruction,
+          temperature: action === "niqqud" ? 0.25 : 0.75,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              suggestions: { type: Type.ARRAY, items: { type: Type.STRING } },
+            },
+            required: ["suggestions"],
+          },
+        },
+      });
+
+      let suggestions = parseSuggestions(response.text);
+      if (!suggestions.length) suggestions = [selectedText];
+      res.status(200).json({ suggestions });
+      return;
+    }
 
     const extra = instruction
       ? `\n\nADDITIONAL INSTRUCTIONS FROM THE USER (follow these closely, as long as they don't conflict with excluding contact details / inventing facts):\n"""\n${instruction}\n"""`

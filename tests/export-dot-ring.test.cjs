@@ -164,6 +164,51 @@ assert.match(
   /\.exp-project-list\s*\{[\s\S]*margin:[\s\S]*padding:/,
   'Nested project bullets should have compact list styling'
 );
+assert.match(
+  html,
+  /<button[^>]*id="btnAiPrompt"[^>]*onclick="openAiPromptDialog\(\)"[^>]*aria-label="עריכת הנחיות ל-AI"[\s\S]*<\/button>/,
+  'Settings should expose the AI instruction through an icon button instead of a visible textarea'
+);
+assert.match(
+  html,
+  /<div class="modal-overlay" id="aiPromptModal"[\s\S]*<textarea id="scriptPrompt"[\s\S]*<\/textarea>[\s\S]*id="btnSaveAiPrompt"/,
+  'AI instruction editing should happen in its own dialog with the existing scriptPrompt textarea'
+);
+const settingsModalHtml = html.slice(html.indexOf('id="settingsModal"'), html.indexOf('id="archiveModal"'));
+assert.doesNotMatch(
+  settingsModalHtml,
+  /scriptPrompt/,
+  'The main settings screen should not show the AI instruction label above the script area'
+);
+assert.match(
+  html,
+  /<h3 class="set-col-title set-title-row">[\s\S]*הגדרות הקראה[\s\S]*id="verCombo"[\s\S]*id="btnNewVersion"[\s\S]*id="btnAiPrompt"/,
+  'Version combo, new version, and AI prompt icon should sit in the narration settings title row'
+);
+const scriptToolbarHtml = html.slice(
+  html.indexOf('<label class="set-label">תסריט ההקראה</label>'),
+  html.indexOf('<textarea id="scriptArea"')
+);
+assert.doesNotMatch(
+  scriptToolbarHtml,
+  /btnNewVersion/,
+  'The script toolbar should no longer contain the new-version button'
+);
+assert.match(
+  html,
+  /<textarea id="scriptArea"[^>]*oncontextmenu="openScriptContextMenu\(event\)"/,
+  'The script textarea should open an AI context menu on right-click'
+);
+assert.match(
+  html,
+  /id="scriptContextMenu"[\s\S]*ניקוד[\s\S]*ניסוח מחדש[\s\S]*הוראות להקלטה/,
+  'The script context menu should offer niqqud, rewrite, and recording-instruction actions'
+);
+assert.match(
+  html,
+  /function recordNarration\(\)[\s\S]*if \(recInProgress \|\| recSession\) \{ stopActiveRecording\(\); return; \}[\s\S]*btn\.disabled = false; btn\.textContent = '⏹ עצור';/,
+  'Record button should remain clickable as a stop button while recording'
+);
 
 const mafneItem = listItemContaining('<b>מפנה</b>');
 assert.match(mafneItem, /מערכת לניהול ייעוציים פנסיוניים ללקוחות הבנק[\s\S]*ASP\.NET[\s\S]*SSRS/);

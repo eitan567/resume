@@ -1606,6 +1606,34 @@
       color: var(--navy);
     }
 
+    .set-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .set-title-main {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .set-title-tools {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      direction: rtl;
+      flex-wrap: wrap;
+    }
+
+    .set-title-tools .set-btn-ghost {
+      padding: 6px 12px;
+      white-space: nowrap;
+    }
+
     @media (max-width: 720px) {
       .modal-body.set-cols {
         grid-template-columns: 1fr;
@@ -1737,6 +1765,15 @@
     .set-btn-ghost:hover {
       background: #faf7f1;
       border-color: #c7bfb1;
+    }
+
+    .icon-only {
+      width: 34px;
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
     }
 
     .set-btn-ghost:disabled,
@@ -1933,6 +1970,112 @@
       gap: 10px;
       justify-content: flex-start;
     }
+
+    .ai-prompt-modal {
+      width: min(620px, 94vw);
+    }
+
+    .ai-prompt-modal .set-textarea {
+      min-height: 190px;
+      resize: vertical;
+    }
+
+    .script-context-menu {
+      position: fixed;
+      z-index: 220;
+      min-width: 220px;
+      display: none;
+      padding: 6px;
+      border: 1px solid #ddd6ca;
+      border-radius: 8px;
+      background: #fffdfa;
+      box-shadow: 0 18px 42px -26px rgba(40, 34, 28, .55), 0 6px 18px -14px rgba(40, 34, 28, .38);
+    }
+
+    .script-context-menu.open {
+      display: block;
+    }
+
+    .script-context-menu button {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: #2b2f36;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 9px;
+      text-align: right;
+    }
+
+    .script-context-menu button:hover {
+      background: #f3eee4;
+      color: var(--navy);
+    }
+
+    .ai-action-modal {
+      width: min(660px, 94vw);
+    }
+
+    .selection-preview {
+      margin: 0 0 12px;
+      padding: 9px 11px;
+      border: 1px solid #eee6d8;
+      border-radius: 8px;
+      background: #fcfaf6;
+      color: #444b54;
+      font-size: 13px;
+      line-height: 1.55;
+      max-height: 96px;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+
+    .ai-suggestions {
+      display: grid;
+      gap: 8px;
+      margin: 10px 0 12px;
+    }
+
+    .ai-suggestion {
+      width: 100%;
+      border: 1px solid #ddd6ca;
+      border-radius: 8px;
+      background: #fff;
+      color: #2b2f36;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13.5px;
+      line-height: 1.55;
+      padding: 10px 12px;
+      text-align: right;
+      white-space: pre-wrap;
+    }
+
+    .ai-suggestion:hover {
+      border-color: var(--navy);
+      background: #f7f9fd;
+    }
+
+    .voice-choice-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      margin: 10px 0 12px;
+    }
+
+    .voice-choice-grid[hidden],
+    .ai-suggestions[hidden],
+    .set-section[hidden],
+    .set-btn-ghost[hidden],
+    .form-submit[hidden] {
+      display: none !important;
+    }
   </style>
 </head>
 
@@ -1961,8 +2104,8 @@
     <div class="controls-group">
       <span class="group-label">תצוגה</span>
       <div class="lang-switch">
-        <button id="viewNormal" class="lang-btn active" onclick="setView('normal')">רגילה</button>
-        <button id="viewWide" class="lang-btn" onclick="setView('wide')">רחבה</button>
+        <button id="viewNormal" class="lang-btn active" onclick="setView('normal')" data-en="Normal view">תצוגה רגילה</button>
+        <button id="viewWide" class="lang-btn" onclick="setView('wide')" data-en="Wide view">תצוגה רחבה</button>
       </div>
     </div>
 
@@ -2509,31 +2652,32 @@
 
         <!-- Right column: narration settings -->
         <div class="set-col">
-          <h3 class="set-col-title">הגדרות הקראה <span id="setLangTag" class="set-tag">עברית</span>
-            <span id="verBadge" class="ver-badge"></span>
+          <h3 class="set-col-title set-title-row">
+            <span class="set-title-main">הגדרות הקראה <span id="setLangTag" class="set-tag">עברית</span>
+              <span id="verBadge" class="ver-badge"></span>
+            </span>
+            <span class="set-title-tools">
+              <select class="set-select" id="verCombo" onchange="onVersionPick(this.value)" title="גרסאות"></select>
+              <button class="set-btn-ghost" id="btnNewVersion" onclick="createVersion()"
+                title="יוצר גרסה חדשה וריקה שתעבוד בה">➕ גרסה חדשה</button>
+              <button class="set-icon-link" id="btnArchive" onclick="openArchive()" title="ארכיון גרסאות" aria-label="ארכיון גרסאות">
+                <svg viewBox="0 0 24 24"><path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12.07l.81 1H5.12z"/></svg>
+              </button>
+              <button class="set-icon-link icon-only" id="btnAiPrompt" onclick="openAiPromptDialog()" title="עריכת הנחיות ל-AI" aria-label="עריכת הנחיות ל-AI">
+                <svg viewBox="0 0 24 24"><path d="M19 2l.9 2.1L22 5l-2.1.9L19 8l-.9-2.1L16 5l2.1-.9L19 2zM9.5 3l1.5 3.5L14.5 8 11 9.5 9.5 13 8 9.5 4.5 8 8 6.5 9.5 3zm8.9 8.2l-1.6-1.6L4 22.4 2.6 21 15.4 8.2l-1.6-1.6 1.4-1.4 4.6 4.6-1.4 1.4z"/></svg>
+              </button>
+            </span>
           </h3>
-
-          <div class="set-section">
-            <label class="set-label" for="scriptPrompt">הנחיה ל‑AI <span class="set-muted">(אופציונלי)</span></label>
-            <textarea id="scriptPrompt" class="set-textarea" rows="2" onblur="saveScriptPrompt()"
-              placeholder="איך לכתוב את התסריט? לדוגמה: בגוף ראשון, טון נלהב, להדגיש את הניסיון הבנקאי…"></textarea>
-          </div>
 
           <div class="set-section set-grow">
             <div class="set-row">
               <label class="set-label">תסריט ההקראה</label>
               <div class="ver-bar">
-                <button class="set-icon-link" id="btnArchive" onclick="openArchive()" title="ארכיון גרסאות" aria-label="ארכיון גרסאות">
-                  <svg viewBox="0 0 24 24"><path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12.07l.81 1H5.12z"/></svg>
-                </button>
-                <select class="set-select" id="verCombo" onchange="onVersionPick(this.value)" title="גרסאות"></select>
-                <button class="set-btn-ghost" id="btnNewVersion" onclick="createVersion()"
-                  title="יוצר גרסה חדשה וריקה שתעבוד בה">➕ גרסה חדשה</button>
                 <button class="set-btn-ghost" id="btnGenScript" onclick="generateScript()"
                   title="שולח את קורות החיים ל‑AI ומחליף את תוכן התיבה בתסריט חדש">✨ הפק תסריט</button>
               </div>
             </div>
-            <textarea id="scriptArea" class="set-textarea"
+            <textarea id="scriptArea" class="set-textarea" oncontextmenu="openScriptContextMenu(event)"
               placeholder="לחץ 'הפק תסריט עם AI' כדי שה‑AI ייצר תסריט קריינות מקורות החיים, או כתוב/ערוך ידנית. פסקאות מופרדות בשורה ריקה."></textarea>
 
             <!-- One row (RTL): save (right) · slider · play · record (left) -->
@@ -2580,6 +2724,57 @@
         <p class="set-hint" style="margin:0 0 12px">בחירת גרסה מהארכיון תפעיל אותה, והגרסה הוותיקה ביותר ברשימה הפעילה
           תועבר לארכיון במקומה.</p>
         <div id="archiveList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI instruction dialog -->
+  <div class="modal-overlay" id="aiPromptModal" onclick="if(event.target===this)closeAiPromptDialog()">
+    <div class="modal ai-prompt-modal" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <span class="modal-title">הנחיות ל-AI</span>
+        <button class="modal-close" onclick="closeAiPromptDialog()" aria-label="סגור">&#10005;</button>
+      </div>
+      <div class="modal-body">
+        <label class="set-label" for="scriptPrompt">הנחיה ל-AI <span class="set-muted">(אופציונלי)</span></label>
+        <textarea id="scriptPrompt" class="set-textarea"
+          placeholder="איך לכתוב את התסריט? לדוגמה: בגוף ראשון, טון נלהב, להדגיש את הניסיון הבנקאי..."></textarea>
+        <div class="confirm-actions">
+          <button class="form-submit set-btn-tiny" id="btnSaveAiPrompt" onclick="saveAiPromptDialog()">שמירה</button>
+          <button class="set-btn-ghost set-btn-tiny" onclick="closeAiPromptDialog()">ביטול</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script selected-text AI context menu -->
+  <div class="script-context-menu" id="scriptContextMenu" role="menu">
+    <button type="button" onclick="startScriptContextAction('niqqud')" role="menuitem">ניקוד</button>
+    <button type="button" onclick="startScriptContextAction('rewrite')" role="menuitem">ניסוח מחדש</button>
+    <button type="button" onclick="startScriptContextAction('recording')" role="menuitem">הוראות להקלטה</button>
+  </div>
+
+  <!-- Selected-text AI action dialog -->
+  <div class="modal-overlay" id="selectionAiModal" onclick="if(event.target===this)closeSelectionAiDialog()">
+    <div class="modal ai-action-modal" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <span class="modal-title" id="selectionAiTitle">פעולת AI</span>
+        <button class="modal-close" onclick="closeSelectionAiDialog()" aria-label="סגור">&#10005;</button>
+      </div>
+      <div class="modal-body">
+        <p class="selection-preview" id="selectionAiSelected"></p>
+        <div class="set-section" id="selectionAiPromptBlock" hidden>
+          <label class="set-label" for="selectionAiPrompt">הכוונה ל-AI</label>
+          <textarea id="selectionAiPrompt" class="set-textarea" rows="3"
+            placeholder="לדוגמה: קצר יותר, רשמי יותר, עם דגש על ניסיון בנקאי..."></textarea>
+        </div>
+        <div class="voice-choice-grid" id="recordInstructionChoices" hidden></div>
+        <p class="set-status" id="selectionAiStatus"></p>
+        <div class="ai-suggestions" id="selectionAiSuggestions" hidden></div>
+        <div class="confirm-actions">
+          <button class="form-submit set-btn-tiny" id="selectionAiRun" onclick="runSelectionAi()">שלח ל-AI</button>
+          <button class="set-btn-ghost set-btn-tiny" onclick="closeSelectionAiDialog()">סגור</button>
+        </div>
       </div>
     </div>
   </div>
@@ -2821,8 +3016,8 @@
       if (liveStop) throw new Error('stopped');
       const ai = new GoogleGenAI({ apiKey: tokenR.token, httpOptions: { apiVersion: 'v1alpha' } });
       const sys = isEn
-        ? 'You are a warm, polished professional voice-over narrator. Read the given text aloud in English, naturally, clearly and pleasantly. Do not add, omit, translate or comment — just narrate it beautifully.'
-        : 'אתה קריין מקצועי, חם ומלוטש. הקרא בקול את הטקסט בעברית בצורה טבעית, ברורה ונעימה, כמו קריינות מקצועית. אל תוסיף, אל תשמיט, אל תתרגם ואל תגיב — רק הקרא אותו יפה.';
+        ? 'You are a warm, polished professional voice-over narrator. Read the given text aloud in English, naturally, clearly and pleasantly. If the text contains <voice note="...">...</voice> tags, treat the note as a recording direction for the enclosed words and never read the tags aloud. Do not add, omit, translate or comment — just narrate it beautifully.'
+        : 'אתה קריין מקצועי, חם ומלוטש. הקרא בקול את הטקסט בעברית בצורה טבעית, ברורה ונעימה, כמו קריינות מקצועית. אם מופיעים תגי <voice note="...">...</voice>, התייחס אליהם כהוראות הקלטה למילים שבתוכם ואל תקריא את התגים עצמם. אל תוסיף, אל תשמיט, אל תתרגם ואל תגיב — רק הקרא אותו יפה.';
       if (liveCtx && liveCtx.state === 'suspended') { try { await liveCtx.resume(); } catch (e) { } }
       await new Promise((resolve, reject) => {
         let settled = false, gotAudio = false, idx = 0;
@@ -2955,7 +3150,7 @@
     // (and is used for dynamic content like chat answers / future per-user CVs).
     let setLangCode = 'he';
     let activeVersion = null;   // { id, versionNo, name, script:[], segments:[{text,url}], audioUrl }
-    let recSession = null, recStopFlag = false;
+    let recSession = null, recStopFlag = false, recInProgress = false;
 
     function setStatus(elId, text, cls) {
       const el = document.getElementById(elId);
@@ -3079,27 +3274,228 @@
     // The AI instruction ("הנחיה ל‑AI") is persisted per language in the DB so it
     // survives reloads.
     async function loadScriptPrompt() {
+      const promptEl = document.getElementById('scriptPrompt');
+      if (!promptEl) return;
       try {
         const j = await fetch('/api/narration-versions', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'getPrompt', lang: setLangCode })
         }).then(r => r.json());
-        document.getElementById('scriptPrompt').value = (j && typeof j.prompt === 'string') ? j.prompt : '';
+        promptEl.value = (j && typeof j.prompt === 'string') ? j.prompt : '';
       } catch (e) { /* leave empty */ }
     }
-    function saveScriptPrompt() {
-      const prompt = document.getElementById('scriptPrompt').value;
-      fetch('/api/narration-versions', {
+    async function saveScriptPrompt() {
+      const promptEl = document.getElementById('scriptPrompt');
+      const prompt = promptEl ? promptEl.value : '';
+      return fetch('/api/narration-versions', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'setPrompt', lang: setLangCode, prompt })
-      }).catch(() => { });
+      });
     }
+    function openAiPromptDialog() {
+      const ov = document.getElementById('aiPromptModal');
+      if (!ov) return;
+      ov.classList.add('open');
+      loadScriptPrompt();
+      setTimeout(() => {
+        const input = document.getElementById('scriptPrompt');
+        if (input) input.focus();
+      }, 60);
+    }
+    function closeAiPromptDialog() {
+      const ov = document.getElementById('aiPromptModal');
+      if (ov) ov.classList.remove('open');
+    }
+    async function saveAiPromptDialog() {
+      const btn = document.getElementById('btnSaveAiPrompt');
+      const orig = btn ? btn.textContent : '';
+      if (btn) { btn.disabled = true; btn.textContent = 'שומר...'; }
+      try {
+        const r = await saveScriptPrompt();
+        if (r && !r.ok) throw new Error('שמירה נכשלה');
+        closeAiPromptDialog();
+        notify('הנחיות ה-AI נשמרו ✓', 'ok');
+      } catch (e) {
+        notify('שגיאה בשמירת ההנחיות', 'err');
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = orig; }
+      }
+    }
+
+    let scriptSelection = null;
+    let selectionAiMode = null;
+    const recordingInstructionOptions = [
+      { label: 'הדגשה קלה', note: 'emphasis-soft', desc: 'להבליט מעט בלי לשנות קצב.' },
+      { label: 'הדגשה חזקה', note: 'emphasis-strong', desc: 'להטעים בבירור את הבחירה.' },
+      { label: 'לאט וברור', note: 'slow-clear', desc: 'להאט ולבטא היטב.' },
+      { label: 'פאוזה לפני', note: 'pause-before', desc: 'להוסיף רגע קצר לפני הבחירה.' },
+      { label: 'טון נלהב', note: 'warm-energy', desc: 'להקריא באנרגיה חיובית יותר.' },
+      { label: 'טון רשמי', note: 'formal-emphasis', desc: 'להדגיש באופן ענייני ומכובד.' }
+    ];
+
+    function getScriptSelection() {
+      const area = document.getElementById('scriptArea');
+      if (!area) return null;
+      const start = area.selectionStart || 0;
+      const end = area.selectionEnd || 0;
+      if (end <= start) return null;
+      const text = area.value.slice(start, end);
+      if (!text.trim()) return null;
+      return { start, end, text };
+    }
+    function openScriptContextMenu(e) {
+      const sel = getScriptSelection();
+      if (!sel) return true;
+      e.preventDefault();
+      scriptSelection = sel;
+      const menu = document.getElementById('scriptContextMenu');
+      if (!menu) return false;
+      menu.style.visibility = 'hidden';
+      menu.classList.add('open');
+      const r = menu.getBoundingClientRect();
+      const x = Math.max(8, Math.min(e.clientX, window.innerWidth - r.width - 8));
+      const y = Math.max(8, Math.min(e.clientY, window.innerHeight - r.height - 8));
+      menu.style.left = x + 'px';
+      menu.style.top = y + 'px';
+      menu.style.visibility = '';
+      return false;
+    }
+    function closeScriptContextMenu() {
+      const menu = document.getElementById('scriptContextMenu');
+      if (menu) menu.classList.remove('open');
+    }
+    function startScriptContextAction(mode) {
+      closeScriptContextMenu();
+      scriptSelection = getScriptSelection() || scriptSelection;
+      if (!scriptSelection || !scriptSelection.text.trim()) {
+        notify('בחר טקסט בתסריט לפני הפעלת הפעולה.', 'err');
+        return;
+      }
+      selectionAiMode = mode;
+      const ov = document.getElementById('selectionAiModal');
+      const title = document.getElementById('selectionAiTitle');
+      const selected = document.getElementById('selectionAiSelected');
+      const promptBlock = document.getElementById('selectionAiPromptBlock');
+      const prompt = document.getElementById('selectionAiPrompt');
+      const choices = document.getElementById('recordInstructionChoices');
+      const run = document.getElementById('selectionAiRun');
+      const suggestions = document.getElementById('selectionAiSuggestions');
+      const status = document.getElementById('selectionAiStatus');
+      if (title) title.textContent = mode === 'niqqud' ? 'הצעות ניקוד' : (mode === 'rewrite' ? 'ניסוח מחדש' : 'הוראות להקלטה');
+      if (selected) selected.textContent = scriptSelection.text;
+      if (promptBlock) promptBlock.hidden = mode !== 'rewrite';
+      if (prompt) prompt.value = '';
+      if (choices) choices.hidden = mode !== 'recording';
+      if (suggestions) { suggestions.hidden = true; suggestions.innerHTML = ''; }
+      if (status) status.textContent = mode === 'recording' ? 'בחר אופן הדגשה להקלטה.' : '';
+      if (run) {
+        run.hidden = mode === 'recording';
+        run.textContent = mode === 'niqqud' ? 'הצע ניקוד' : 'שלח ל-AI';
+      }
+      if (mode === 'recording') renderRecordingInstructionChoices();
+      if (ov) ov.classList.add('open');
+      if (mode === 'rewrite') setTimeout(() => prompt && prompt.focus(), 60);
+      if (mode === 'niqqud') setTimeout(runSelectionAi, 80);
+    }
+    function closeSelectionAiDialog() {
+      const ov = document.getElementById('selectionAiModal');
+      if (ov) ov.classList.remove('open');
+    }
+    function replaceScriptSelection(value) {
+      const area = document.getElementById('scriptArea');
+      if (!area || !scriptSelection) return;
+      area.focus();
+      area.setRangeText(value, scriptSelection.start, scriptSelection.end, 'select');
+      scriptSelection = { start: scriptSelection.start, end: scriptSelection.start + value.length, text: value };
+      closeSelectionAiDialog();
+      setStatus('recHint', 'התסריט נערך. שמור ואז הקלט מחדש את החלקים שהשתנו.', 'ok');
+    }
+    function renderSelectionSuggestions(items) {
+      const box = document.getElementById('selectionAiSuggestions');
+      if (!box) return;
+      box.innerHTML = '';
+      (items || []).forEach((item) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'ai-suggestion';
+        btn.textContent = item;
+        btn.onclick = () => replaceScriptSelection(item);
+        box.appendChild(btn);
+      });
+      box.hidden = !box.children.length;
+    }
+    async function runSelectionAi() {
+      if (!scriptSelection) return;
+      const run = document.getElementById('selectionAiRun');
+      const status = document.getElementById('selectionAiStatus');
+      const prompt = document.getElementById('selectionAiPrompt');
+      const orig = run ? run.textContent : '';
+      if (selectionAiMode === 'rewrite' && prompt && !prompt.value.trim()) {
+        if (status) { status.textContent = 'כתוב הכוונה קצרה ל-AI.'; status.className = 'set-status err'; }
+        return;
+      }
+      if (run) { run.disabled = true; run.textContent = 'מעבד...'; }
+      if (status) { status.textContent = 'מבקש הצעות מה-AI...'; status.className = 'set-status'; }
+      try {
+        const r = await fetch('/api/narration-script', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: selectionAiMode,
+            lang: setLangCode,
+            selectedText: scriptSelection.text,
+            context: document.getElementById('scriptArea').value,
+            instruction: prompt ? prompt.value.trim() : ''
+          })
+        });
+        const j = await r.json();
+        if (!r.ok || !j.suggestions || !j.suggestions.length) throw new Error(j.error || 'לא התקבלו הצעות.');
+        renderSelectionSuggestions(j.suggestions);
+        if (status) { status.textContent = 'בחר הצעה כדי להחליף את הטקסט המסומן.'; status.className = 'set-status ok'; }
+      } catch (e) {
+        if (status) { status.textContent = 'שגיאה בפעולת AI: ' + (e.message || e); status.className = 'set-status err'; }
+      } finally {
+        if (run) { run.disabled = false; run.textContent = orig; }
+      }
+    }
+    function renderRecordingInstructionChoices() {
+      const box = document.getElementById('recordInstructionChoices');
+      if (!box) return;
+      box.innerHTML = '';
+      recordingInstructionOptions.forEach((opt) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'set-btn-ghost';
+        btn.title = opt.desc;
+        btn.textContent = opt.label;
+        btn.onclick = () => applyRecordingInstruction(opt);
+        box.appendChild(btn);
+      });
+    }
+    function applyRecordingInstruction(opt) {
+      if (!scriptSelection || !opt) return;
+      const wrapped = '<voice note="' + opt.note + '">' + scriptSelection.text + '</voice>';
+      replaceScriptSelection(wrapped);
+      notify('נוספה הוראת הקלטה: ' + opt.label, 'ok');
+    }
+
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('scriptContextMenu');
+      if (menu && menu.classList.contains('open') && !menu.contains(e.target)) closeScriptContextMenu();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeScriptContextMenu();
+        closeAiPromptDialog();
+        closeSelectionAiDialog();
+      }
+    });
 
     async function generateScript() {
       const text = narrationText();
       if (!text) return;
-      const instruction = document.getElementById('scriptPrompt').value.trim();
-      saveScriptPrompt();   // persist the instruction whenever it's used
+      const promptEl = document.getElementById('scriptPrompt');
+      const instruction = promptEl ? promptEl.value.trim() : '';
+      saveScriptPrompt().catch(() => { });   // persist the instruction whenever it's used
       const btn = document.getElementById('btnGenScript');
       const orig = btn.textContent;
       btn.disabled = true; btn.textContent = '✨ יוצר…';
@@ -3166,16 +3562,28 @@
       return new Int16Array(buf, 44, Math.floor((buf.byteLength - 44) / 2));
     }
 
+    function stopActiveRecording() {
+      if (!recInProgress && !recSession) return;
+      recStopFlag = true;
+      const btn = document.getElementById('btnRecord');
+      if (btn) { btn.disabled = true; btn.textContent = 'עוצר...'; }
+      setStatus('recHint', 'עוצר את ההקלטה...');
+      if (recSession) { try { recSession.close(); } catch (e) { } }
+    }
+
     async function recordNarration() {
       const btn = document.getElementById('btnRecord');
       const orig = btn.textContent;
+      if (recInProgress || recSession) { stopActiveRecording(); return; }
       recStopFlag = false;
-      btn.disabled = true; btn.textContent = '⏺️ מקליט…';
+      recInProgress = true;
+      btn.disabled = false; btn.textContent = '⏹ עצור';
       try {
         // 1) Save the script first (creates a new version if changed, inheriting
         //    unchanged chunks' audio).
         setStatus('recHint', 'שומר את התסריט…');
         await persistScript();
+        if (recStopFlag) throw new Error('ההקלטה בוטלה.');
         if (!activeVersion || !activeVersion.segments || !activeVersion.segments.length)
           throw new Error('אין תסריט להקליט.');
         const segments = activeVersion.segments.map(s => ({ text: s.text, url: s.url || null }));
@@ -3185,7 +3593,7 @@
         if (!needsAudio) {
           setStatus('recHint', 'ההקלטה כבר עדכנית — אין חלקים חדשים להקליט.', 'ok');
           notify('ההקלטה כבר עדכנית', 'info');
-          btn.disabled = false; btn.textContent = orig; return;
+          return;
         }
 
         // 2) Synthesize only the chunks that lack audio; reuse the rest.
@@ -3199,11 +3607,13 @@
           synthPcm = await captureLivePcmPerChunk(missingIdx.map(i => segments[i].text), (i, n) => {
             setStatus('recHint', 'מקליט חלק חדש ' + i + ' מתוך ' + n + '…');
           });
+          if (recStopFlag) throw new Error('ההקלטה בוטלה.');
           if (synthPcm.length !== missingIdx.length) throw new Error('לא התקבל אודיו מלא מהמנוע.');
         }
 
         // 3) Assemble per-chunk PCM (reused fetched from Blob, new from engine),
         //    upload the new chunk files, then stitch and upload the merged file.
+        if (recStopFlag) throw new Error('ההקלטה בוטלה.');
         setStatus('recHint', 'מקודד ומעלה…');
         const { upload } = await import('https://esm.sh/@vercel/blob@0.27/client');
         const uploadWav = async (int16, tag) => {
@@ -3238,10 +3648,20 @@
         setStatus('recHint', 'ההקלטה הופקה ונשמרה ומשותפת לכל המבקרים. ✓', 'ok');
         notify('ההקלטה הופקה ונשמרה ✓', 'ok');
       } catch (e) {
-        setStatus('recHint', 'שגיאה בהקלטה: ' + (e.message || e), 'err');
-        notify('שגיאה בהקלטה: ' + (e.message || e), 'err');
+        const msg = e.message || String(e);
+        if (msg.indexOf('בוטלה') >= 0) {
+          setStatus('recHint', 'ההקלטה בוטלה.', '');
+          notify('ההקלטה בוטלה', 'info');
+        } else {
+          setStatus('recHint', 'שגיאה בהקלטה: ' + msg, 'err');
+          notify('שגיאה בהקלטה: ' + msg, 'err');
+        }
+      } finally {
+        recInProgress = false;
+        recStopFlag = false;
+        recSession = null;
+        btn.disabled = false; btn.textContent = orig;
       }
-      btn.disabled = false; btn.textContent = orig;
     }
 
     // Connect to Gemini Live and narrate each chunk in its own turn, returning an
@@ -3254,8 +3674,8 @@
       const ai = new GoogleGenAI({ apiKey: tokenR.token, httpOptions: { apiVersion: 'v1alpha' } });
       const isEn = setLangCode === 'en';
       const sys = isEn
-        ? 'You are a warm, polished professional voice-over narrator. Read the given text aloud in English, naturally, clearly and pleasantly. Do not add, omit, translate or comment — just narrate it beautifully.'
-        : 'אתה קריין מקצועי, חם ומלוטש. הקרא בקול את הטקסט בעברית בצורה טבעית, ברורה ונעימה, כמו קריינות מקצועית. אל תוסיף, אל תשמיט, אל תתרגם ואל תגיב — רק הקרא אותו יפה.';
+        ? 'You are a warm, polished professional voice-over narrator. Read the given text aloud in English, naturally, clearly and pleasantly. If the text contains <voice note="...">...</voice> tags, treat the note as a recording direction for the enclosed words and never read the tags aloud. Do not add, omit, translate or comment — just narrate it beautifully.'
+        : 'אתה קריין מקצועי, חם ומלוטש. הקרא בקול את הטקסט בעברית בצורה טבעית, ברורה ונעימה, כמו קריינות מקצועית. אם מופיעים תגי <voice note="...">...</voice>, התייחס אליהם כהוראות הקלטה למילים שבתוכם ואל תקריא את התגים עצמם. אל תוסיף, אל תשמיט, אל תתרגם ואל תגיב — רק הקרא אותו יפה.';
       const results = [];        // one Int16Array per chunk
       let curPieces = [];        // audio pieces for the current turn
       return await new Promise((resolve, reject) => {
