@@ -1494,22 +1494,47 @@
       cursor: pointer;
     }
 
-    .set-icon-btn {
+    .set-icon-link {
       flex: 0 0 auto;
-      border: 1px solid #ddd6ca;
-      background: #fff;
-      border-radius: 8px;
-      width: 32px;
-      height: 32px;
-      font-size: 15px;
+      border: none;
+      background: transparent;
+      padding: 4px;
       cursor: pointer;
-      line-height: 1;
-      transition: background .12s, border-color .12s;
+      color: #8a8275;
+      line-height: 0;
+      border-radius: 6px;
+      transition: color .12s, background .12s;
     }
 
-    .set-icon-btn:hover {
-      background: #faf7f1;
-      border-color: #c7bfb1;
+    .set-icon-link svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+      display: block;
+    }
+
+    .set-icon-link:hover {
+      color: var(--navy);
+      background: #f3eee4;
+    }
+
+    .set-name-input {
+      flex: 1 1 90px;
+      min-width: 70px;
+      max-width: 150px;
+      font-family: inherit;
+      font-size: 12px;
+      padding: 6px 8px;
+      border: 1px solid #ddd6ca;
+      border-radius: 8px;
+      background: #fcfaf6;
+      color: #353a42;
+    }
+
+    .set-name-input:focus {
+      outline: none;
+      border-color: var(--navy);
+      box-shadow: 0 0 0 3px rgba(2, 33, 89, .1);
     }
 
     /* Archive list */
@@ -2484,8 +2509,12 @@
             <div class="set-row">
               <label class="set-label">תסריט ההקראה</label>
               <div class="ver-bar">
-                <button class="set-icon-btn" id="btnArchive" onclick="openArchive()" title="ארכיון גרסאות">🗄</button>
+                <button class="set-icon-link" id="btnArchive" onclick="openArchive()" title="ארכיון גרסאות" aria-label="ארכיון גרסאות">
+                  <svg viewBox="0 0 24 24"><path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12.07l.81 1H5.12z"/></svg>
+                </button>
                 <select class="set-select" id="verCombo" onchange="onVersionPick(this.value)" title="גרסאות"></select>
+                <input class="set-name-input" id="verName" placeholder="שם הגרסה" maxlength="40"
+                  onblur="saveVersionName()" title="שם לגרסה הפעילה">
                 <button class="set-btn-ghost" id="btnGenScript" onclick="generateScript()"
                   title="שולח את קורות החיים ל‑AI ומחליף את תוכן התיבה בתסריט חדש">✨ הפק תסריט</button>
               </div>
@@ -2863,7 +2892,8 @@
     // narrate button never has to regenerate. The live engine remains the fallback
     // (and is used for dynamic content like chat answers / future per-user CVs).
     let setLangCode = 'he';
-    let activeVersion = null;   // { id, script:[], segments:[{text,url}], audioUrl }
+    let activeVersion = null;   // { id, versionNo, name, script:[], segments:[{text,url}], audioUrl }
+    let freshGeneration = false; // true when the textarea holds a NEW AI generation not yet saved as a version
     let recSession = null, recStopFlag = false;
 
     function setStatus(elId, text, cls) {
@@ -2905,8 +2935,10 @@
       try {
         const m = await fetch('/api/narration?lang=' + setLangCode).then(r => r.json());
         activeVersion = (m && m.versionId)
-          ? { id: m.versionId, script: m.script || [], segments: m.segments || [], audioUrl: m.audioUrl || null, updatedAt: m.updatedAt }
+          ? { id: m.versionId, versionNo: m.versionNo, name: m.name || null, script: m.script || [], segments: m.segments || [], audioUrl: m.audioUrl || null, updatedAt: m.updatedAt }
           : null;
+        freshGeneration = false;   // we're now editing a saved version (or nothing)
+        document.getElementById('verName').value = (activeVersion && activeVersion.name) || '';
         if (m && Array.isArray(m.script) && m.script.length) {
           document.getElementById('scriptArea').value = m.script.join('\n\n');
         }
@@ -2919,11 +2951,11 @@
     }
 
     // ---- Version combo ----
-    function verLabel(v, idx) {
-      const d = v.createdAt ? new Date(v.createdAt) : null;
-      const when = d ? d.toLocaleDateString('he-IL') + ' ' + d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : ('גרסה ' + (idx + 1));
-      const mark = v.hasAudio ? '🎙️' : '📝';
-      return mark + ' ' + when + (v.active ? ' • פעילה' : '');
+    function verLabel(v) {
+      const base = 'V' + (v.versionNo || '?');
+      const nm = v.name ? ' · ' + v.name : '';
+      const mic = v.hasAudio ? ' 🎙️' : '';
+      return base + nm + mic + (v.active ? ' ✓' : '');
     }
     async function loadVersionCombo() {
       const combo = document.getElementById('verCombo');
@@ -2940,13 +2972,26 @@
           combo.appendChild(o); combo.disabled = true; return;
         }
         combo.disabled = false;
-        versions.forEach((v, i) => {
+        versions.forEach((v) => {
           const o = document.createElement('option');
-          o.value = String(v.id); o.textContent = verLabel(v, i);
+          o.value = String(v.id); o.textContent = verLabel(v);
           if (v.active) o.selected = true;
           combo.appendChild(o);
         });
       } catch (e) { /* leave combo as-is */ }
+    }
+    async function saveVersionName() {
+      if (!activeVersion || !activeVersion.id) return;
+      const name = document.getElementById('verName').value.trim();
+      if ((activeVersion.name || '') === name) return;
+      try {
+        await fetch('/api/narration-versions', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'setName', lang: setLangCode, id: activeVersion.id, name })
+        });
+        activeVersion.name = name;
+        await loadVersionCombo();
+      } catch (e) { notify('שגיאה בשמירת שם הגרסה.', 'err'); }
     }
     async function onVersionPick(id) {
       if (!id) return;
@@ -2996,7 +3041,8 @@
         const j = await r.json();
         if (j.paragraphs && j.paragraphs.length) {
           document.getElementById('scriptArea').value = j.paragraphs.join('\n\n');
-          setStatus('recHint', 'תסריט חדש נוצר. אפשר לערוך, ואז לשמור ולהקליט.', 'ok');
+          freshGeneration = true;   // saving this will create a NEW version
+          setStatus('recHint', 'תסריט חדש נוצר. שמירה/הקלטה תיצור גרסה חדשה (V הבא).', 'ok');
         } else {
           setStatus('recHint', 'יצירת התסריט נכשלה: ' + (j.error || 'שגיאה'), 'err');
         }
@@ -3013,11 +3059,14 @@
       if (!paragraphs.length) throw new Error('אין תסריט לשמירה.');
       const r = await fetch('/api/narration-save', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lang: setLangCode, script: paragraphs })
+        body: JSON.stringify({ lang: setLangCode, script: paragraphs, newVersion: freshGeneration })
       });
       const j = await r.json();
       if (!r.ok || !j.ok) throw new Error(j.error || 'שמירה נכשלה.');
       activeVersion = Object.assign({ updatedAt: new Date().toISOString() }, j.version);
+      freshGeneration = false;   // the generation is now persisted as a version
+      const nm = document.getElementById('verName');
+      if (nm) nm.value = activeVersion.name || '';
       return j;
     }
     async function saveScript() {
@@ -3031,32 +3080,20 @@
         reflectRecStatus();
         await loadVersionCombo();
         if (j.unchanged) {
-          setStatus('recHint', 'התסריט לא השתנה — לא נוצרה גרסה חדשה.', '');
+          setStatus('recHint', 'התסריט לא השתנה.', '');
           notify('אין שינוי בתסריט', 'info');
+        } else if (j.created) {
+          setStatus('recHint', 'נוצרה גרסה חדשה (V' + (activeVersion.versionNo || '') + '). לחץ "הקלט" כדי להפיק את ההקראה.', 'ok');
+          notify('נוצרה גרסה חדשה V' + (activeVersion.versionNo || '') + ' ✓', 'ok');
         } else {
-          setStatus('recHint', 'נוצרה גרסה חדשה. כשתהיה מרוצה — לחץ "הקלט" כדי להפיק את ההקראה (יוקלטו רק החלקים שהשתנו).', 'ok');
-          notify('התסריט נשמר כגרסה חדשה ✓', 'ok');
+          setStatus('recHint', 'הגרסה עודכנה (עריכה ידנית — לא נוצרה גרסה חדשה). לחץ "הקלט" כדי לעדכן את החלקים שהשתנו.', 'ok');
+          notify('הגרסה עודכנה ✓', 'ok');
         }
       } catch (e) {
         setStatus('recHint', e.message || 'שגיאת רשת בשמירה.', 'err');
         notify(e.message || 'שגיאה בשמירה', 'err');
       }
       btn.disabled = false; btn.textContent = orig;
-    }
-
-    // Merge the script paragraphs into the FEWEST possible chunks (each chunk is
-    // one Live turn). The recording is pre-made, so fewer/larger chunks mean fewer
-    // audible seams. We cap each chunk to stay under the model's per-turn limit.
-    const REC_CHUNK_MAX = 900;
-    function mergeChunks(paragraphs, maxChars) {
-      const out = []; let cur = '';
-      for (const p of paragraphs) {
-        const joined = cur ? cur + '\n' + p : p;
-        if (cur && joined.length > maxChars) { out.push(cur); cur = p; }
-        else cur = joined;
-      }
-      if (cur) out.push(cur);
-      return out;
     }
 
     // Fetch one of our own chunk WAVs (24kHz mono 16-bit, 44-byte header) as PCM.
@@ -3257,9 +3294,11 @@
           const when = d ? d.toLocaleString('he-IL') : '';
           const info = document.createElement('div');
           info.className = 'arch-info';
-          info.innerHTML = '<b>' + (v.hasAudio ? '🎙️ מוקלטת' : '📝 ללא הקלטה') + '</b>' +
-            '<span>' + when + ' · ' + v.recordedChunks + '/' + v.chunks + ' חלקים</span>' +
-            '<em>' + (v.preview || '') + '…</em>';
+          const title = 'V' + (v.versionNo || '?') + (v.name ? ' · ' + v.name : '') + (v.hasAudio ? ' 🎙️' : '');
+          info.innerHTML = '<b></b><span></span><em></em>';
+          info.querySelector('b').textContent = title;
+          info.querySelector('span').textContent = when + ' · ' + v.recordedChunks + '/' + v.chunks + ' חלקים';
+          info.querySelector('em').textContent = (v.preview || '') + '…';
           const btn = document.createElement('button');
           btn.className = 'set-btn-tiny form-submit';
           btn.textContent = 'הפעל';

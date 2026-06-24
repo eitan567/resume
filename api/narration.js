@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
     const lang = ((req.query && req.query.lang) === "en") ? "en" : "he";
     const db = await getDb();
     const r = await db.query(
-      `SELECT id, script, segments, audio_url, created_at
+      `SELECT id, version_no, name, script, segments, audio_url, created_at
          FROM narration_versions
         WHERE lang = $1 AND active = true
         ORDER BY id DESC LIMIT 1`,
@@ -31,6 +31,8 @@ module.exports = async (req, res) => {
       audioUrl: row.audio_url || null,
       updatedAt: row.created_at || null,
       versionId: row.id,
+      versionNo: row.version_no || null,
+      name: row.name || null,
       segments: parseJson(row.segments, []),
     });
   } catch (error) {

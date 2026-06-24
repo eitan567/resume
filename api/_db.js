@@ -58,6 +58,8 @@ async function ensureSchema(db) {
   await db.query(`CREATE TABLE IF NOT EXISTS narration_versions (
     id SERIAL PRIMARY KEY,
     lang TEXT NOT NULL,
+    version_no INTEGER,
+    name TEXT,
     script TEXT NOT NULL DEFAULT '[]',
     segments TEXT NOT NULL DEFAULT '[]',
     audio_url TEXT,
@@ -67,11 +69,22 @@ async function ensureSchema(db) {
   await db.query(`CREATE TABLE IF NOT EXISTS narration_versions_archive (
     id SERIAL PRIMARY KEY,
     lang TEXT NOT NULL,
+    version_no INTEGER,
+    name TEXT,
     script TEXT NOT NULL DEFAULT '[]',
     segments TEXT NOT NULL DEFAULT '[]',
     audio_url TEXT,
     created_at TEXT NOT NULL
   )`);
+  // Add the version_no/name columns to pre-existing tables, then backfill numbers.
+  for (const t of ["narration_versions", "narration_versions_archive"]) {
+    await db.query(`ALTER TABLE ${t} ADD COLUMN IF NOT EXISTS version_no INTEGER`);
+    await db.query(`ALTER TABLE ${t} ADD COLUMN IF NOT EXISTS name TEXT`);
+  }
+  await db.query(`UPDATE narration_versions v SET version_no = s.rn
+    FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY lang ORDER BY id) rn
+            FROM narration_versions WHERE version_no IS NULL) s
+   WHERE v.id = s.id AND v.version_no IS NULL`);
   // Generic key/value store for small persisted settings (e.g. the per-language
   // AI script-generation instruction).
   await db.query(`CREATE TABLE IF NOT EXISTS app_settings (
@@ -100,8 +113,10 @@ async function getDb() {
 
 // Merge paragraphs into the fewest chunks under maxChars (one chunk = one Live
 // turn = one audio segment). MUST match the client's mergeChunks exactly so that
-// segment boundaries (and audio reuse) line up.
-const REC_CHUNK_MAX = 900;
+// segment boundaries (and audio reuse) line up. The cap is driven by the Live
+// model's per-turn audio limit, NOT by the paragraph count — keep it as large as
+// the engine reliably handles so the recording has as few seams as possible.
+const REC_CHUNK_MAX = 1800;
 function mergeChunks(paragraphs, maxChars) {
   maxChars = maxChars || REC_CHUNK_MAX;
   const out = [];

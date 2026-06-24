@@ -19,6 +19,8 @@ function summarize(row) {
   const script = parseJson(row.script, []);
   return {
     id: row.id,
+    versionNo: row.version_no || null,
+    name: row.name || null,
     createdAt: row.created_at,
     active: !!row.active,
     hasAudio: !!row.audio_url,
@@ -60,7 +62,7 @@ module.exports = async (req, res) => {
 
     if (action === "list") {
       const r = await db.query(
-        `SELECT id, script, segments, audio_url, active, created_at
+        `SELECT id, version_no, name, script, segments, audio_url, active, created_at
            FROM narration_versions WHERE lang = $1 ORDER BY id DESC`,
         [code]
       );
@@ -70,11 +72,20 @@ module.exports = async (req, res) => {
 
     if (action === "listArchive") {
       const r = await db.query(
-        `SELECT id, script, segments, audio_url, false AS active, created_at
+        `SELECT id, version_no, name, script, segments, audio_url, false AS active, created_at
            FROM narration_versions_archive WHERE lang = $1 ORDER BY id DESC`,
         [code]
       );
       res.status(200).json({ ok: true, versions: r.rows.map(summarize) });
+      return;
+    }
+
+    if (action === "setName") {
+      const id = parseInt(body.id, 10);
+      if (!id) { res.status(400).json({ error: "missing id" }); return; }
+      const name = String(body.name || "").slice(0, 80).trim() || null;
+      await db.query(`UPDATE narration_versions SET name = $1 WHERE id = $2 AND lang = $3`, [name, id, code]);
+      res.status(200).json({ ok: true, name });
       return;
     }
 
@@ -116,7 +127,7 @@ module.exports = async (req, res) => {
       const id = parseInt(body.id, 10);
       if (!id) { res.status(400).json({ error: "missing id" }); return; }
       const a = await db.query(
-        `SELECT lang, script, segments, audio_url, created_at
+        `SELECT lang, version_no, name, script, segments, audio_url, created_at
            FROM narration_versions_archive WHERE id = $1 AND lang = $2`,
         [id, code]
       );
@@ -126,16 +137,16 @@ module.exports = async (req, res) => {
       // Make room: if live versions are at the cap, move the oldest live one to
       // the archive (it takes the activated version's place).
       const live = await db.query(
-        `SELECT id, lang, script, segments, audio_url, created_at
+        `SELECT id, lang, version_no, name, script, segments, audio_url, created_at
            FROM narration_versions WHERE lang = $1 ORDER BY id ASC`,
         [code]
       );
       if (live.rows.length >= MAX_VERSIONS) {
         const oldest = live.rows[0];
         await db.query(
-          `INSERT INTO narration_versions_archive (lang, script, segments, audio_url, created_at)
-           VALUES ($1, $2, $3, $4, $5)`,
-          [oldest.lang, oldest.script, oldest.segments, oldest.audio_url, oldest.created_at]
+          `INSERT INTO narration_versions_archive (lang, version_no, name, script, segments, audio_url, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [oldest.lang, oldest.version_no, oldest.name, oldest.script, oldest.segments, oldest.audio_url, oldest.created_at]
         );
         await db.query(`DELETE FROM narration_versions WHERE id = $1`, [oldest.id]);
       }
@@ -143,9 +154,9 @@ module.exports = async (req, res) => {
       // Move the archived version into the live table as the active one.
       await db.query(`UPDATE narration_versions SET active = false WHERE lang = $1`, [code]);
       await db.query(
-        `INSERT INTO narration_versions (lang, script, segments, audio_url, active, created_at)
-         VALUES ($1, $2, $3, $4, true, $5)`,
-        [av.lang, av.script, av.segments, av.audio_url, av.created_at]
+        `INSERT INTO narration_versions (lang, version_no, name, script, segments, audio_url, active, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, true, $7)`,
+        [av.lang, av.version_no, av.name, av.script, av.segments, av.audio_url, av.created_at]
       );
       await db.query(`DELETE FROM narration_versions_archive WHERE id = $1`, [id]);
       res.status(200).json({ ok: true });
