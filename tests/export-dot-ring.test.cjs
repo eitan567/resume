@@ -182,12 +182,27 @@ assert.doesNotMatch(
 );
 assert.match(
   html,
-  /<h3 class="set-col-title set-title-row">[\s\S]*הגדרות הקראה[\s\S]*id="verCombo"[\s\S]*id="btnNewVersion"[\s\S]*id="btnAiPrompt"/,
-  'Version combo, new version, and AI prompt icon should sit in the narration settings title row'
+  /<h3 class="set-col-title set-title-row">[\s\S]*הגדרות הקראה[\s\S]*id="btnArchive"[\s\S]*id="verCombo"[\s\S]*id="btnNewVersion"/,
+  'Archive icon, version combo, and new version should sit in the narration settings title row'
+);
+assert.match(
+  html,
+  /<span class="set-title-tools">[\s\S]*id="btnArchive"[\s\S]*id="verCombo"[\s\S]*id="btnNewVersion"/,
+  'Archive icon should be to the right of the version combo in RTL title controls'
+);
+assert.doesNotMatch(
+  html.slice(html.indexOf('<h3 class="set-col-title set-title-row">'), html.indexOf('<label class="set-label">תסריט ההקראה</label>')),
+  /btnAiPrompt/,
+  'AI prompt icon should not stay in the narration title row'
 );
 const scriptToolbarHtml = html.slice(
   html.indexOf('<label class="set-label">תסריט ההקראה</label>'),
   html.indexOf('<textarea id="scriptArea"')
+);
+assert.match(
+  scriptToolbarHtml,
+  /id="btnAiPrompt"[\s\S]*id="btnGenScript"/,
+  'AI prompt icon should sit to the right of the generate-script button in the script toolbar'
 );
 assert.doesNotMatch(
   scriptToolbarHtml,
@@ -203,6 +218,31 @@ assert.match(
   html,
   /id="scriptContextMenu"[\s\S]*ניקוד[\s\S]*ניסוח מחדש[\s\S]*הוראות להקלטה/,
   'The script context menu should offer niqqud, rewrite, and recording-instruction actions'
+);
+assert.match(
+  settingsModalHtml,
+  /id="scriptContextMenu"[\s\S]*<\/div>[\s\S]*id="selectionAiModal"/,
+  'The script context menu should live inside the settings modal overlay so it appears above settings'
+);
+assert.match(
+  html,
+  /let narrationSettingsLoaded = false,[\s\S]*narrationSettingsLoading = null/,
+  'Narration settings should keep a loaded/loading state for prefetching'
+);
+assert.match(
+  html,
+  /window\.addEventListener\('DOMContentLoaded', \(\) => \{[\s\S]*track\('page_view'\)[\s\S]*ensureNarrationSettingsLoaded\(\)/,
+  'Narration settings should be prefetched when the page loads'
+);
+assert.match(
+  html,
+  /which === 'settings'[\s\S]*ensureNarrationSettingsLoaded\(\);/,
+  'Opening settings should reuse the prefetched narration settings instead of forcing a fresh load'
+);
+assert.doesNotMatch(
+  html,
+  /which === 'settings'[\s\S]*loadNarrationSettings\(\);/,
+  'Opening settings should not directly reload the active version every time'
 );
 assert.match(
   html,
